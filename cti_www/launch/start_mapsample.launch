@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
+      <arg name="port" value="9095" />
+  </include>
+  <include file="$(find ctiwww)/launch/ctiwww.launch" />
+  <include file="$(find cti_mapsample)/launch/cti_mapsample.launch" />
+</launch>

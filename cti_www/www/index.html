@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<script type="text/javascript" src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script src="js/roslibjs/roslib.js"></script>
+
+<link rel="stylesheet" type="text/css" href="css/style.css">
+<script type="text/javascript" type="text/javascript">
+  // Connecting to ROS
+  var ros = new ROSLIB.Ros({
+    url : 'ws://192.168.1.102:9095'
+  });
+ 
+  //判断是否连接成功并输出相应的提示消息到web控制台
+  ros.on('connection', function() {
+    document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+  });
+ 
+  ros.on('error', function(error) {
+    document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+  });
+ 
+  ros.on('close', function() {
+    document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+  });
+
+  // Publishing a Topic
+  var cmd_pub = new ROSLIB.Topic({
+    ros : ros,
+    name : '/cti/rosweb/cmd',
+    messageType : 'std_msgs/Int32'
+  });
+ 
+  var command = new ROSLIB.Message({
+    data : 0
+  });//创建一个message
+  function send_command(message)
+  {
+    command.data = message;
+    cmd_pub.publish(command);//发布消息
+  }
+
+  // Subscribing to a Topic
+  var listener = new ROSLIB.Topic({
+    ros : ros,
+    name : '/cti/rosweb/state',
+    messageType : 'std_msgs/String'
+  });
+  
+  listener.subscribe(function(message) {
+    var jsonObj = window.JSON.parse(message.data);
+    document.getElementById("run_state").innerHTML = jsonObj.runstate;
+    document.getElementById("sensor_state").innerHTML = jsonObj.sensorstate;
+    document.getElementById("longitude").innerHTML = jsonObj.longitude;
+    document.getElementById("latitude").innerHTML = jsonObj.latitude;
+    document.getElementById("altitude").innerHTML = jsonObj.altitude;
+    document.getElementById("lat_err").innerHTML = jsonObj.lat_err;
+    document.getElementById("lon_err").innerHTML = jsonObj.lon_err;
+    document.getElementById("sats_used").innerHTML = jsonObj.sats_used;
+    document.getElementById("message").innerHTML = jsonObj.message;
+  });
+ 
+</script>
+
+</head>
+<body>
+  <title>阳光无人车</title>
+  <h1>阳光无人车</h1>
+  <p id = "connect_status">服务器状态（未响应）</p>
+  <label>当前状态:</label>
+  <span id="run_state"></span>
+  </span><br><span>
+  <label>传感器状态:</label>
+  <span id="sensor_state"></span>
+  <div>
+    <label>longitude:</label>
+    <span id="longitude"></span>
+    </span><br><span>
+    <label>latitude:</label>
+    <span id="latitude"></span>
+    </span><br><span>
+    <label>altitude:</label>
+    <span id="altitude"></span>
+    </span><br><span>
+    <label>lat_err:</label>
+    <span id="lat_err"></span>
+    </span><br><span>
+    <label>lon_err:</label>
+    <span id="lon_err"></span>
+    </span><br><span>
+    <label>sats_used:</label>
+    <span id="sats_used"></span>
+    </span><br><span>
+    <label>message:</label>
+    <span id="message"></span>
+  </div>
+  <button onclick = "send_command(1)" style="width:200px;">&nbsp;开始&nbsp;</button>
+  <button onclick = "send_command(2)" style="width:200px;">&nbsp;结束&nbsp;</button>
+  <button onclick = "send_command(3)" style="width:200px;">&nbsp;数据上传&nbsp;</button><br />
+</body>
+</html>

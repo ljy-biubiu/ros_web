@@ -1,0 +1,18 @@
+<launch>
+    <arg name="gpsTopic" value="/cti/sensing/gnss/pos_cti" />
+    <arg name="pcTopic" value="/lio_sam/mapping/map_local" />
+
+    <arg name="startMappingCmd" value="$(find lslam)/script/startMapping" />
+    <arg name="stopMappingCmd" value="$(find lslam)/script/stopMapping" />
+
+    <node pkg="cti_mapsample" type="cti_mapsample" name="cti_mapsample_node" output="screen">
+        <param name="gpsTopic" value="$(arg gpsTopic)" />
+        <param name="pcTopic" value="$(arg pcTopic)" />
+
+        <param name="startMappingCmd" value="$(arg startMappingCmd)" />
+        <param name="stopMappingCmd" value="$(arg stopMappingCmd)" />
+    </node>
+    <node pkg="cti_mapsample" type="state_monitor.py" name="state_monitor_node" output="screen">
+        <rosparam file="$(find cti_mapsample)/config/config.yaml" command="load" />
+    </node>        
+</launch>
