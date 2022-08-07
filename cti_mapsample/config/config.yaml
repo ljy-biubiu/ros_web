@@ -1,0 +1,7 @@
+status_monitor: 
+  - { name: "imu1",             type: "sensor_msgs/Imu",          topic: "/mti/sensor/imu" }
+  - { name: "imu2",             type: "sensor_msgs/Imu",          topic: "/cti/sensing/driver/imu/imu_std" }
+  - { name: "lidar",            type: "sensor_msgs/PointCloud2",  topic: "/cti/sensor/rslidar/velodyne_points" }
+  - { name: "realsense odom",   type: "nav_msgs/Odometry",        topic: "/camera/odom/sample" }
+  - { name: "realsense camera", type: "sensor_msgs/Image",        topic: "/camera/fisheye1/image_raw" }
+  - { name: "gps",              type: "sensor_msgs/NavSatFix",    topic: "/ublox_gps/fix" }
