@@ -1,23 +1,39 @@
 cmake_minimum_required(VERSION 3.5)
 project(cti_mapsample)
 
-add_compile_options(-std=c++14)
+set(CMAKE_CXX_FLAGS "-std=c++14")
+#add_compile_options(-std=c++14)
 add_definitions(-DLINUX)
 find_package(catkin REQUIRED COMPONENTS
     roscpp
+    ctilog
     sensor_msgs
     std_msgs
     cti_msgs
+    cti_vector_map_msgs
+    cti_rblite_msgs
     geometry_msgs
+    tf
+    cv_bridge
+    roslib
 )
 
+SET( CMAKE_BUILD_TYPE "Debug")
+
+
 find_package(CURL REQUIRED)
+# find_package(OpenCV 3.4.5 REQUIRED)
+find_package( OpenCV REQUIRED )
+find_package(PCL REQUIRED)
 
 include_directories(
     include/
     include/FTP
+    include/matToPng_base64
     ${catkin_INCLUDE_DIRS}
     ${CURL_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
 )
 
 catkin_package()
@@ -36,6 +52,8 @@ add_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     ${catkin_LIBRARIES}
     ${CURL_LIBRARIES}
+    ${OpenCV_LIBS}
+    ${PCL_LIBRARIES}
     jsoncpp
 )
 

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <!-- <meta http-equiv="refresh" content="0.1"> content 为间隔时间 -->
+    <script type="text/javascript"
+        src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+    <script src="js/roslibjs/roslib.js"></script>
+    <script src="js/design/WEB_PARAM.js"></script>
+    <script src="js/design/project_name.js"></script>
+    <script src="js/design/CodeToNavigation.js"></script>
+    <script src="js/design/project_name.js"></script>
+    <script src="js/design/BOX_message.js"></script>
+    <script src="js/design/cloud_toChinese.js"></script>
+
+
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+
+    <script type="text/javascript" type="text/javascript">
+
+        // Connecting to ROS
+        var ros = new ROSLIB.Ros({
+            url: IP_PORT
+        });
+
+        var color = '#99bebe ';
+        var style;
+
+        function createStyle() {
+            style = document.createElement('style');
+            style.type = 'text/css';
+        }
+        function changeBackgroundColor() {
+            if (!style.parentNode) document.head.appendChild(style);
+        }
+        createStyle();
+        changeBackgroundColor();
+
+        function changeColor() {
+            var color = "yellow|green|blue";
+            color = color.split("|");
+            document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
+        }
+
+        //判断是否连接成功并输出相应的提示消息到web控制台
+        ros.on('connection', function () {
+            document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+            style.innerHTML = 'body {background-color: #bebfc0 ;}';
+        });
+
+        ros.on('error', function (error) {
+            document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+            style.innerHTML = 'body {background-color: #4f5257  ;}';
+        });
+
+        ros.on('close', function () {
+            document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+            style.innerHTML = 'body {background-color: #4f5257  ;}';
+            alert("服务器连接中断，请检查wifi状态，并刷新当前页面");
+        });
+
+
+
+        var GPS = {
+            PI: 3.14159265358979324,
+            x_pi: 3.14159265358979324 * 3000.0 / 180.0,
+
+            transformLat: function (x, y) {
+                var ret = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x))
+                ret += (20.0 * Math.sin(6.0 * x * this.PI) + 20.0 * Math.sin(2.0 * x * this.PI)) * 2.0 / 3.0
+                ret += (20.0 * Math.sin(y * this.PI) + 40.0 * Math.sin(y / 3.0 * this.PI)) * 2.0 / 3.0
+                ret += (160.0 * Math.sin(y / 12.0 * this.PI) + 320 * Math.sin(y * this.PI / 30.0)) * 2.0 / 3.0
+                return ret
+            },
+            transformLon: function (x, y) {
+                var ret = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x))
+                ret += (20.0 * Math.sin(6.0 * x * this.PI) + 20.0 * Math.sin(2.0 * x * this.PI)) * 2.0 / 3.0
+                ret += (20.0 * Math.sin(x * this.PI) + 40.0 * Math.sin(x / 3.0 * this.PI)) * 2.0 / 3.0
+                ret += (150.0 * Math.sin(x / 12.0 * this.PI) + 300.0 * Math.sin(x / 30.0 * this.PI)) * 2.0 / 3.0
+                return ret
+            },
+            // 坐标转换
+            delta: function (lat, lon) {
+                var a = 6378245.0 //  a: 卫星椭球坐标投影到平面地图坐标系的投影因子。
+                var ee = 0.00669342162296594323 //  ee: 椭球的偏心率。
+                var dLat = this.transformLat(lon - 105.0, lat - 35.0)
+                var dLon = this.transformLon(lon - 105.0, lat - 35.0)
+                var radLat = lat / 180.0 * this.PI
+                var magic = Math.sin(radLat)
+                magic = 1 - ee * magic * magic
+                var sqrtMagic = Math.sqrt(magic)
+                dLat = (dLat * 180.0) / ((a * (1 - ee)) / (magic * sqrtMagic) * this.PI)
+                dLon = (dLon * 180.0) / (a / sqrtMagic * Math.cos(radLat) * this.PI)
+                return { 'lat': dLat, 'lon': dLon }
+            },
+            // 判断是否为国外坐标
+            outOfChina: function (lat, lon) {
+                if (lon < 72.004 || lon > 137.8347) { return true }
+                if (lat < 0.8293 || lat > 55.8271) { return true }
+                return false
+            },
+            // GPS---高德
+            gcj_encrypt: function (wgsLat, wgsLon) {
+                if (this.outOfChina(wgsLat, wgsLon)) { return { 'lat': wgsLat, 'lon': wgsLon } }
+
+                var d = this.delta(wgsLat, wgsLon)
+                return { 'lat': wgsLat + d.lat, 'lon': wgsLon + d.lon }
+            }
+        }
+
+        //export default GPS
+
+        // Connecting to ROS
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                alert("浏览器不支持地理定位。");
+            }
+        }
+
+        function showError(error) {
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("定位失败,用户拒绝请求地理定位");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("定位失败,位置信息是不可用");
+                    break;
+                case error.TIMEOUT:
+                    alert("定位失败,请求获取用户位置超时");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("定位失败,定位系统失效");
+                    break;
+            }
+        }
+        
+        var lat;
+        var lag;
+        function showPosition(position) {
+            lat = position.coords.latitude; //纬度 
+            lag = position.coords.longitude; //经度 
+            //alert("aaaaaalat:"+lat + "aaaaaalag:" + lag);
+            //alert('纬度:' + lat + ',经度:' + lag);
+            const mark = GPS.gcj_encrypt(
+                Number(lat),
+                Number(lag)
+            )
+            //console.log(mark)
+            alert("aaaaaa:"+mark.lat + "aaaaaa:" + mark.lon);//高德坐标系
+
+        }
+        getLocation();
+
+
+    </script>
+    </body>
+
+</html>

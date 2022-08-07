@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script type="text/javascript"
+    src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script src="../js/roslibjs/roslib.js"></script>
+  <script src="../js/design/WEB_PARAM.js"></script>
+  <script src="../js/diary/demo.json"></script>
+
+  <link rel="stylesheet" type="text/css" href="../css/style.css">
+
+  <script type="text/javascript" type="text/javascript">
+
+
+    var aa = window.localStorage.getItem('/home/ljy/dev/catkin_wx/src/cti_data_viewer/cti_www/www/license.js'); //读存储的数据
+    var aaObj = JSON.parse(aa); //将JSON字符串转化成JSON对象方便读取
+    var LICENSE = aaObj.license;
+    var IP_PORT = aaObj.ip_port;
+
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+      url: IP_PORT
+    });
+
+    var color = '#99bebe ';
+    var style;
+
+    function createStyle() {
+      style = document.createElement('style');
+      style.type = 'text/css';
+    }
+    function changeBackgroundColor() {
+      if (!style.parentNode) document.head.appendChild(style);
+    }
+    function changeColor() {
+      var color = "yellow|green|blue";
+      color = color.split("|");
+      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
+    }
+    setInterval("changeColor()", 500);
+    createStyle();
+    changeBackgroundColor();
+
+    //判断是否连接成功并输出相应的提示消息到web控制台
+    ros.on('connection', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+      style.innerHTML = 'body {background-color: #bebfc0 ;}';
+    });
+
+    ros.on('error', function (error) {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+    ros.on('close', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+
+    // Publishing a Topic
+    var fix_frpc_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/web/fix_frpc',
+      messageType: 'std_msgs/Bool'
+    });
+
+    var fix_frpc_data = new ROSLIB.Message({
+      data: 0
+    });//创建一个message
+    function send_frpc_command(message) {
+      fix_frpc_data.data = message;
+      fix_frpc_pub.publish(fix_frpc_data);//发布消息
+    }
+
+    function fix_frpc_press() {
+      if (confirm("你确定修复frpc文件吗？")) {
+        var code = prompt("请输入当前车牌号");
+        code = code.substring(0, 1);
+        if (code == "A") {
+          var code = prompt("请输入管理员密码");
+          if (code != 123456) {
+            alert("密码错误！");
+            return;
+          }
+          send_frpc_command(true);
+        }
+        else
+        {
+          alert("当前车型无法修改frpc!");
+        }
+      }
+    }
+
+    // Publishing a Topic
+    var fix_version_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/web/fix_version',
+      messageType: 'cti_msgs/DataArray'
+    });
+    var fix_vesion_data_array = new ROSLIB.Message({
+      datas: []
+    });//创建一个message
+
+    var fix_vesion_data = new ROSLIB.Message({
+      name: "",
+      data: "",
+      type: 0
+    });//创建一个message
+
+    var fix_vesion_data_hw = new ROSLIB.Message({
+      name: "",
+      data: "",
+      type: 0
+    });//创建一个message
+
+    var fix_vesion_data_gd = new ROSLIB.Message({
+      name: "",
+      data: "",
+      type: 0
+    });//创建一个message
+
+
+    var fix_vesion_data_hwn = new ROSLIB.Message({
+      name: "",
+      data: "",
+      type: 0
+    });//创建一个message
+
+
+    var fix_vesion_data_vhc = new ROSLIB.Message({
+      name: "",
+      data: "",
+      type: 0
+    });//创建一个message
+
+    function send_version_command(message) {
+      // fix_vesion_data.data = message;
+      fix_version_pub.publish(message);//发布消息
+    }
+
+
+    function fix_version_press() {
+      fix_vesion_data_array.datas = [];
+      if (confirm("你确定要修复version文件吗？")) {
+        var code = prompt("请输入管理员密码")
+        if (code != 123456) {
+          alert("密码错误！");
+          return;
+        }
+        fix_vesion_data.name = "switch_on";
+        fix_vesion_data_array.datas.push(fix_vesion_data);
+        send_version_command(fix_vesion_data_array);
+      }
+    }
+
+    ///////////////////////////////////////////////////////////////
+
+    // Subscribing to a Topic
+    var web_version_warn_listener = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/web/fix_file_tip',
+      messageType: 'std_msgs/String'
+    });
+
+    web_version_warn_listener.subscribe(function (message) {
+
+      alert(message.data);
+    });
+
+
+    //////////////////////////////////////////////////////////////
+    // Subscribing to a Topic
+    var web_version_cur_statu_listener = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/web/web_version_status',
+      messageType: 'cti_msgs/DataArray'
+    });
+
+    web_version_cur_statu_listener.subscribe(function (message) {
+      fix_vesion_data_array.datas = [];
+
+      var hw_version = message.datas[0].data;
+      var garden_name = message.datas[1].data;
+      var hw_version_numb = message.datas[2].data;
+      var vehicle_numb = message.datas[3].data;
+
+      var version_data = "硬件版本   :" + message.datas[0].data + "\n"
+        + "园区         :" + message.datas[1].data + "\n"
+        + "硬件序列号:" + message.datas[2].data + "\n"
+        + "车牌号      :" + message.datas[3].data;
+
+      if (confirm(version_data + "\n\n请确定当前数值是否正确，确定需要修改version版本吗？")) {
+        if (confirm(version_data + "\n\n需要修改硬件版本吗(第一个数值)？")) {
+          var hw_version = prompt("请输入硬件版本", message.datas[0].data);
+          if (hw_version == null) {
+            hw_version = message.datas[0].data;
+          }
+          fix_vesion_data_hw.name = "hw_version";
+          fix_vesion_data_hw.data = hw_version;
+          fix_vesion_data_array.datas.push(fix_vesion_data_hw);
+        }
+        if (confirm(version_data + "\n\n需要修改园区名吗(第二个数值)？")) {
+          var garden_name = prompt("请输入园区名", message.datas[1].data);
+          if (garden_name == null) {
+            garden_name = message.datas[1].data;
+          }
+          fix_vesion_data_gd.name = "garden_name";
+          fix_vesion_data_gd.data = garden_name;
+          fix_vesion_data_array.datas.push(fix_vesion_data_gd);
+        }
+        if (confirm(version_data + "\n\n需要修改硬件序列号吗(第三个数值)？")) {
+          var hw_version_numb = prompt("请输入硬件序列号", message.datas[2].data);
+          if (hw_version_numb == null) {
+            hw_version_numb = message.datas[2].data;
+          }
+          fix_vesion_data_hwn.name = "hw_version_numb";
+          fix_vesion_data_hwn.data = hw_version_numb;
+          fix_vesion_data_array.datas.push(fix_vesion_data_hwn);
+        }
+        if (confirm(version_data + "\n\n需要修改车牌号吗(第四个数值)？")) {
+          var vehicle_numb = prompt("请输入车牌号", message.datas[3].data);
+          if (vehicle_numb == null) {
+            vehicle_numb = message.datas[3].data;
+          }
+          fix_vesion_data_vhc.name = "vehicle_numb";
+          fix_vesion_data_vhc.data = vehicle_numb;
+          fix_vesion_data_array.datas.push(fix_vesion_data_vhc);
+        }
+        if (confirm(version_data + "\n\n修改后的version的版本：\n\n硬件版本:" + hw_version
+          + "\n园区名：" + garden_name + "\n硬件序列号：" + hw_version_numb
+          + "\n车牌号号：" + vehicle_numb)) {
+          send_version_command(fix_vesion_data_array);
+        }
+        for (var i = 0; fix_vesion_data_array.datas.length > i; i++) {
+          console.log(fix_vesion_data_array.datas[i]);
+        }
+      }
+    });
+
+  </script>
+
+
+<body>
+  <div style="margin-left:20%;padding:1px 16px;height:1000px;overflow:hidden;">
+
+    <div class="srv_state">
+      <p id="connect_status">服务器状态（未响应）</p>
+
+    </div>
+
+    <title>工控机配置修复</title>
+    <h1 id="license">工控机配置修复</h1>
+
+    <script language="javascript">
+      LICENSE = '工控机配置修复' + LICENSE;
+      document.getElementById("license").innerHTML = LICENSE;
+    </script>
+
+    <br /><br /><br /><br />
+    <button onclick="fix_version_press()" style="width:600px; height: 180px;font-size: 80px;text-align:center; ">&nbsp;
+      version修复 &nbsp;</button>&nbsp;&nbsp;
+    <div></div>
+    <br /><br /><br /><br />
+    <button onclick="fix_frpc_press()" style="width:600px; height: 180px;font-size: 80px;text-align:center; ">&nbsp;
+      frpc(ssh)修复 &nbsp;</button>&nbsp;&nbsp;
+    <div></div>
+    <br /><br /><br /><br />
+
+  </div>
+  <!-- <div class="icon" >
+  <img src="image/002.png" class="icon" width="400px" height="350px" style="z-index: -1;"/>
+  </div> -->
+
+</body>
+
+</html>

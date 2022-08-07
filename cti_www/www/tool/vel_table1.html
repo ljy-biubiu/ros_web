@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>第一个 ECharts 实例</title>
+	<script src="https://cdn.staticfile.org/jquery/2.2.4/jquery.min.js"></script>
+	<!-- 引入 echarts.js -->
+	<script src="https://cdn.staticfile.org/echarts/4.3.0/echarts.min.js"></script>
+
+	<script type="text/javascript"
+		src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+	<script src="../js/roslibjs/roslib.js"></script>
+	<script src="../js/design/WEB_PARAM.js"></script>
+	<script src="../js/require.js"></script>
+
+	<!-- <link rel="stylesheet" type="text/css" href="css/style.css"> -->
+</head>
+
+<body>
+	<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+	<div id="main1" style="width: 650px;height:370px;"></div>
+	<script type="text/javascript">
+
+		// Connecting to ROS
+		var ros = new ROSLIB.Ros({
+			url: IP_PORT
+		});
+
+		// Subscribing to a Topic
+		var box_movable_msg = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/chassis_serial/wheels_speed',
+			messageType: 'std_msgs/Float32MultiArray'
+		});
+
+
+		var wheel_1_cur = 0;
+		var wheel_2_cur = 0;
+		var wheel_3_cur = 0;
+		var wheel_4_cur = 0;
+
+		box_movable_msg.subscribe(function (message) {
+
+			//console.log(message.data);
+			for (var i = 0; i < message.data.length; i++) {
+				switch (i) {
+					case 0:
+						wheel_1_cur = message.data[i];
+						break;
+					case 1:
+						wheel_2_cur = message.data[i];
+						break;
+					case 2:
+						wheel_3_cur = message.data[i];
+						break;
+					case 3:
+						wheel_4_cur = message.data[i];
+						break;
+				}
+			}
+		});
+
+		let date = [];
+		var time1 = 0;
+
+
+		var wheel_1 = [];
+		var wheel_2 = [];
+		var wheel_3 = [];
+		var wheel_4 = [];
+		//var fir_flag = 1000;
+
+		function addData(shift) {
+
+			// let time = new Date();
+			// now = [time.getHours(), time.getMinutes(), time.getSeconds()].join(':');
+			var now = new Date();
+			date.push(now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds());
+			time1++;
+
+			wheel_1.push(wheel_1_cur);
+			wheel_2.push(wheel_2_cur);
+			wheel_3.push(wheel_3_cur);
+			wheel_4.push(wheel_4_cur);
+			// console.log("======================");
+			// console.log(wheel_1_cur);
+			// console.log(wheel_2_cur);
+			// console.log(wheel_3_cur);
+			// console.log(wheel_4_cur);
+			// console.log("======================");
+
+
+			if (shift) {
+				date.shift();
+				wheel_1.shift();
+				wheel_2.shift();
+				wheel_3.shift();
+				wheel_4.shift();
+			}
+			// now = new Date(+new Date(now) + 1000);
+		}
+
+		for (var i = 1; i < 100; i++) {
+			addData();
+		}
+
+		option = {
+			title: {
+				text: '车辆轮胎转速折线图图'
+			},
+			tooltip: {},
+			legend: {
+				data: ['轮1', '轮2', '轮3', '轮4']
+			},
+			xAxis: {
+				type: 'category',
+				boundaryGap: false,
+				name: 'T'
+			},
+			yAxis: {
+				boundaryGap: [0, '30%'],
+				type: 'value',
+				name: 'N'
+			},
+			series: [
+				{
+					name: '轮1',
+					type: 'line',
+					//smooth: true,
+					//stack: 'a',
+					data: wheel_1,
+					color: 'red'
+				},
+				{
+					name: '轮2',
+					type: 'line',
+					//smooth: true,
+					symbol: 'none',
+					//stack: 'a',
+					data: wheel_2,
+					color: 'green'
+				},
+				{
+					name: '轮3',
+					type: 'line',
+					//smooth: true,
+					symbol: 'none',
+					//stack: 'a',
+					data: wheel_3,
+					color: 'blue'
+				},
+				{
+					name: '轮4',
+					type: 'line',
+					//smooth: true,
+					symbol: 'none',
+					//stack: 'a',
+					data: wheel_4,
+					color: 'yellow'
+				}
+
+			]
+		};
+
+
+
+
+
+		setInterval(function () {
+			addData(true);
+			myChart.setOption({
+				xAxis: {
+					data: date
+				},
+				
+				series: [{
+				    name:'轮1',
+					data: wheel_1
+				},
+				{
+				    name:'轮2',
+					data: wheel_2
+				},
+				{
+				    name:'轮3',
+					data: wheel_3
+				},
+				{
+				    name:'轮4',
+					data: wheel_4
+				}
+			]
+			});
+		}, 100);
+
+		// 基于准备好的dom，初始化echarts实例
+		var myChart = echarts.init(document.getElementById('main1'), 'dark');
+		myChart.setOption(option)
+	</script>
+</body>

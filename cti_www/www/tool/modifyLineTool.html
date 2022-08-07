@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>辅助修图工具</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+	<meta HTTP-EQUIV="Cache-Control" CONTENT="no-cache">
+	<meta HTTP-EQUIV="Expires" CONTENT="0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+
+	<script type="text/javascript"
+		src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+	<script src="../js/roslibjs/roslib.js"></script>
+	<script src="../js/design/WEB_PARAM.js"></script>
+	<script src="../js/design/pointcloud.js"></script>
+	<!-- <script src="js/design/line2.js"></script>
+	<script src="js/design/line3.js"></script> -->
+	<script src="./three.js/build/three.js"></script>
+	<style>
+		body {
+			background-color: #fff;
+			color: #444;
+		}
+		
+		canvas {
+			position: absolute;
+			top: 0;
+			left: 0;
+			z-index: -1;
+			display: block;
+		}
+
+	</style>
+
+	
+
+	
+	<script type="module">
+		
+		import * as THREE from '../three.js/build/three.module.js';
+
+		import Stats from '../three.js/examples/jsm/libs/stats.module.js';
+		import { PCDLoader } from '../three.js/examples/jsm/loaders/PCDLoader.js';
+		import { TrackballControls } from '../three.js/examples/jsm/controls/TrackballControls.js';
+		import { FirstPersonControls } from '../three.js/examples/jsm/controls/FirstPersonControls.js';
+		
+		// Connecting to ROS
+		var ros = new ROSLIB.Ros({
+			url: IP_PORT
+		});
+
+		/////////////////////////////////////////////////////////////////////////////////////////////初始化数据
+		// Subscribing to a Topic  project
+		var listener_changeline = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/web/change_line',
+			messageType: 'std_msgs/String'
+		});
+
+		listener_changeline.subscribe(function (message) {
+			
+			init_line2 == 0;
+			init_line3 == 0;
+			
+		});
+		// Subscribing to a Topic  project
+		var listener_project = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/robot_env',
+			messageType: 'std_msgs/String'
+		});
+
+		listener_project.subscribe(function (message) {
+			
+			project = message.data;
+			
+		});
+
+		// Subscribing to a Topic  project ///////////////初始化线路
+		var listener_roadedge_point = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/web/roadedge_point',
+			messageType: 'std_msgs/String'
+		});
+
+		listener_roadedge_point.subscribe(function (message) {
+			
+			if(init_line2 == 0)
+			{
+				var obj_json = JSON.parse(message.data);
+				var flag = obj_json[0].numb;
+				var j = 0;
+				for (var i = 0; i < obj_json.length; i++) {	
+
+					if(flag == obj_json[i].numb)
+					{
+						j++;
+					}
+					else
+					{
+						flag = obj_json[i].numb;
+						j = 1;
+					}
+					line2.push({
+					"position" : j,
+					"type": 1,
+					"numb": obj_json[i].numb,
+					"x"   : obj_json[i].x,
+					"y"   : obj_json[i].y,
+					"z"   : obj_json[i].z
+				});
+				}
+				init_line2=1;
+		}
+		});
+
+
+		// Subscribing to a Topic  project ///////////////初始化线路
+		var listener_cleararea_point = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/web/cleararea_point',
+			messageType: 'std_msgs/String'
+		});
+
+		listener_cleararea_point.subscribe(function (message) {
+
+			if_exist_cleareare = 1;
+
+			if(init_line3 == 0)
+			{
+				var obj_json = JSON.parse(message.data);
+				var flag = obj_json[0].numb;
+				var j = 0;
+				for (var i = 0; i < obj_json.length; i++) {	
+
+					if(flag == obj_json[i].numb)
+					{
+						j++;
+					}
+					else
+					{
+						flag = obj_json[i].numb;
+						j = 1;
+					}
+
+					line3.push({
+					"position" : j,
+					"type": 9,
+					"numb": obj_json[i].numb,
+					"x"   : obj_json[i].x,
+					"y"   : obj_json[i].y,
+					"z"   : obj_json[i].z
+				});
+				}
+				init_line3 = 1;
+		}
+		});
+		
+
+		/////////////////////////////////////////////////////////////////////////////////////////////初始化数据
+
+
+		setTimeout(function(){                                                                   ///////////////等待0.5秒，执行
+		// Publishing a Topic       上传数据
+		var point_pub = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/rosweb/submit_data_points',
+			messageType: 'std_msgs/String'
+		});
+		
+		var points_data = new ROSLIB.Message({
+			data: 0
+		});//创建一个message
+		function submit_points_data(message) {
+			points_data.data = message;
+			point_pub.publish(points_data);//发布消息
+		}
+
+		// Publishing a Topic       上传日记
+		var point_diary_pub = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/rosweb/submit_data_points_diary',
+			messageType: 'std_msgs/String'
+		});
+		
+		var points_diary_data = new ROSLIB.Message({
+			data: 0
+		});//创建一个message
+		function submit_points_diary_data(message) {
+			points_diary_data.data = message;
+			point_diary_pub.publish(points_diary_data);//发布消息
+		}
+
+		// Publishing a Topic       上传点数据到云端
+		var point_cloud_pub = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/rosweb/submit_points',
+			messageType: 'std_msgs/String'
+		});
+		
+		var point_cloud_data = new ROSLIB.Message({
+			data: 0
+		});//创建一个message
+		function submit_point_cloud_pub(message) {
+			point_cloud_data.data = message;
+			point_cloud_pub.publish(point_cloud_data);//发布消息
+		}
+
+		// Subscribing to a Topic
+
+		let windowHalfX = window.innerWidth / 2;
+		let windowHalfY = window.innerHeight / 2;
+
+		var listener_ndt_pose = new ROSLIB.Topic({
+			ros: ros,
+			name: '/base_link_pose',
+			messageType: 'geometry_msgs/PoseStamped'
+		});
+
+		listener_ndt_pose.subscribe(function (message) {
+
+			if(switch_submit_data == 1)
+			{
+				switch_submit_data = 0;
+				// submit_points_data(JSON.stringify(line2));
+				// submit_points_data(JSON.stringify(line3));
+				submit_points_diary_data(log_sum);
+				submit_point_cloud_pub(log_sum);
+			}
+			
+			pose_x = message.pose.position.x;
+			pose_y = message.pose.position.y;
+			pose_z = message.pose.position.z;
+
+			document.getElementById("position.x").innerHTML = pose_x.toFixed(1);
+			document.getElementById("position.y").innerHTML = pose_y.toFixed(1);
+			document.getElementById("position.z").innerHTML = pose_z.toFixed(1);
+
+			var siny_cosp = 2 * (message.pose.orientation.w * message.pose.orientation.z + message.pose.orientation.x * message.pose.orientation.y);
+			var cosy_cosp = 1 - 2 * (message.pose.orientation.y * message.pose.orientation.y + message.pose.orientation.z * message.pose.orientation.z);
+			yaw = Math.atan2(siny_cosp, cosy_cosp);
+			//console.log(pose_z);
+
+		});
+
+		// Subscribing to a Topic
+		var listener_person_view = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/rosweb/pub_tf_person_view_msg',
+			messageType: 'geometry_msgs/PointStamped'
+		});
+
+		listener_person_view.subscribe(function (message) {
+
+			if (flag_2dOr3d_switch == 0) {
+				person_view_x = pose_x;
+				person_view_y = pose_y;
+				person_view_z = 50;
+			}
+			else if (flag_2dOr3d_switch == 1) {
+				person_view_x = message.point.x;
+				person_view_y = message.point.y;
+				person_view_z = message.point.z;
+			}
+		});
+
+
+		container = document.getElementById('container');
+
+		camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
+
+		scene = new THREE.Scene();
+		scene.background = new THREE.Color(0x000000);
+
+
+
+
+		var geometry = new THREE.BoxGeometry(1.8, 0.8, 1.5);
+		var material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+		material.transparent = true;//是否透明
+		material.opacity = 0.5;//透明度
+		var cube = new THREE.Mesh(geometry, material);
+		cube.position.x = 0;
+		cube.position.y = 0;
+		cube.position.z = 10;
+		scene.add(cube);
+
+
+
+		// //读取文件																	///////本来是用shell读取本地文件的
+		// for (var i = 0; i < line_origal_roadage.length; i++) {
+		// 	line2.push({
+		// 		"type": line_origal_roadage[i].type,
+		// 		"numb": line_origal_roadage[i].numb,
+		// 		"x"   : line_origal_roadage[i].x,
+		// 		"y"   : line_origal_roadage[i].y,
+		// 		"z"   : line_origal_roadage[i].z
+		// 	});
+		// }log
+		// for (var i = 0; i < line_origal_cleararea.length; i++) {
+		// 	line3.push({
+		// 		"type": line_origal_cleararea[i].type,
+		// 		"numb": line_origal_cleararea[i].numb,
+		// 		"x"   : line_origal_cleararea[i].x,
+		// 		"y"   : line_origal_cleararea[i].y,
+		// 		"z"   : line_origal_cleararea[i].z
+		// 	});
+		// }
+
+		//放入点
+		function input_pointTcanvas(point_array){
+			for (var i = 0; i < point_array.length; i++) {
+				var geometry_sphere = new THREE.SphereGeometry(0.05, 1, 1);
+				var material_sphere = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
+				var sphere = new THREE.Mesh(geometry_sphere, material_sphere);
+				sphere.position.x = point_array[i].x;
+				sphere.position.y = point_array[i].y;
+				sphere.position.z = point_array[i].z;
+				pointsArray.push(sphere);
+			}
+			for (var i = 0; i < pointsArray.length; i++) {
+				scene.add(pointsArray[i]);
+			}
+		}
+
+		input_pointTcanvas(line2);
+		input_pointTcanvas(line3);
+
+
+		function delete_lines() {
+			for (var i = 0; i < line_object_Array.length; i++) {
+				scene.remove(line_object_Array[i]);
+			}
+		}
+		function re_render_line(local_array) {
+			//console.log("--------------------------------------2---------------------------------");
+			delete_lines();
+			for (var i = 0; i < local_array.length; i++) {
+				var filter = 0;
+
+				if(local_array[i].type == 1) 																				//判断现的类型
+				{
+					var material_line = new THREE.LineBasicMaterial({ color: 0xffff00, linewidth: 1 });
+					var geometry_line = new THREE.BufferGeometry();
+				}
+				else
+				{
+					var material_line = new THREE.LineBasicMaterial({ color: 0x0000ff, linewidth: 1 });
+					var geometry_line = new THREE.BufferGeometry();
+				}
+
+				// if (pose_z + 2 < local_array[i].z || pose_z - 2 > local_array[i].z)                                     //过滤现范围
+				// {
+				// 	filter = 1;
+				// }
+				if (local_array.length - 1 != i) {                                                                     //集齐同一条线的点才画线
+					if (local_array[i + 1].numb == local_array[i].numb) {
+						pointslineArray.push(new THREE.Vector3(local_array[i].x, local_array[i].y, local_array[i].z));
+					}
+					else if (filter == 1) {
+						pointslineArray.splice(0, pointslineArray.length);//清空数组 
+					}
+					else {
+						if(local_array[i].numb==high_light_point_for_line){var material_line = new THREE.LineBasicMaterial({ color: 0x00ff00, linewidth: 1 });}
+						pointslineArray.push(new THREE.Vector3(local_array[i].x, local_array[i].y, local_array[i].z));
+						geometry_line.setFromPoints(pointslineArray);
+						line_object_Array.push(new THREE.Line(geometry_line, material_line));
+						pointslineArray.splice(0, pointslineArray.length);
+					}
+				}
+				else {
+					pointslineArray.push(new THREE.Vector3(local_array[i].x, local_array[i].y, local_array[i].z));
+					if (filter == 1) {
+						pointslineArray.splice(0, pointslineArray.length);
+						break;
+					}
+					if(local_array[i].numb==high_light_point_for_line){var material_line = new THREE.LineBasicMaterial({ color: 0x00ff00, linewidth: 1 });}
+					geometry_line.setFromPoints(pointslineArray);
+					line_object_Array.push(new THREE.Line(geometry_line, material_line));
+					pointslineArray.splice(0, pointslineArray.length);
+				}
+			}
+			for (var i = 0; i < line_object_Array.length; i++) {									
+				scene.add(line_object_Array[i]);
+			}			
+		};
+
+		var loader = new PCDLoader();
+			const wireframeMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true });
+			var path;
+			if(project=="")
+			{
+				project = "wkyc"
+			}
+			path = "pcd/" + project + ".pcd";
+			console.log(path);
+			loader.load(path, function (points) {
+				points.scale.multiplyScalar(1);                                                                       //物体的局部缩放。默认值是Vector3( 1, 1, 1 )。 
+				scene.add(points);
+				//controls.update();
+			}, null, function (error) { alert(error.target.statusText); 1 });
+
+		renderer = new THREE.WebGLRenderer({ antialias: true });
+		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		container.appendChild(renderer.domElement);
+
+
+		controls = new FirstPersonControls(camera, renderer.domElement);
+		controls.enabled = false;
+		controls.constrainVertical = true;
+
+
+
+
+		// //鼠标事件
+		// var controls = new TrackballControls(camera, renderer.domElement);                                  //轨迹球控件，最常用的控件，可以使用鼠标轻松的移动、平移，缩放场景。
+
+		// controls.rotateSpeed = 20;                                                                          //鼠标控制速度
+		// controls.zoomSpeed = 3;                                                                             //鼠标控制速度
+		// controls.panSpeed = 2;                                                                              //鼠标控制速度
+
+		// controls.staticMoving = true;                                                                       // 静止移动，为 true 则没有惯性
+		// controls.maxDistance = 0.3 * 10000;
+
+		animate();
+
+		function animate() {
+
+			requestAnimationFrame(animate);
+			render();
+
+		}
+
+		function render() {
+
+			if (numb_update_line == 100) {
+				re_render_line(line2);
+				re_render_line(line3);
+				numb_update_line = 0;
+			}
+			numb_update_line++;
+
+			cube.position.x = pose_x;
+			cube.position.y = pose_y;
+			cube.position.z = pose_z;
+			cube.rotation.z = yaw;
+			camera.position.set(person_view_x, person_view_y, person_view_z-35 );
+
+			camera.lookAt(pose_x, pose_y, pose_z);
+			camera.rotation.z = yaw + Math.PI / 180 * 270;
+			// windowHalfX = window.innerWidth / 2;
+			// windowHalfY = window.innerHeight / 2;
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			controls.update();
+			//stats.update();
+			renderer.render(scene, camera);
+
+		}
+
+		window.addEventListener('resize', onWindowResize, false);                                          //根据浏览器窗口的变动更新相机的aspect以及 渲染器的渲染范围，实现自适应的效果。
+
+		function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;                                            //摄像机视锥体的长宽比，通常是使用画布的宽/画布的高。默认值是1（正方形画布）。
+			camera.updateProjectionMatrix();                                                                   //更新摄像机投影矩阵。在任何参数被改变以后必须被调用。
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			controls.handleResize();
+		}
+
+	}, 1000);
+	</script>
+	</head>
+
+	<body>
+	<script>
+		function requestFullScreen(element) {                                                	 //全屏
+			var de = document.querySelector(element) || document.documentElement;
+			if (de.requestFullscreen) {
+				de.requestFullscreen();
+			} else if (de.mozRequestFullScreen) {
+				de.mozRequestFullScreen();
+			} else if (de.webkitRequestFullScreen) {
+				de.webkitRequestFullScreen();
+			}
+		}
+		function exitFullscreen(element) {
+			var de = document.querySelector(element) || document.documentElement;				//退出全屏
+			if (de.exitFullscreen) {
+				de.exitFullscreen();
+			} else if (de.mozCancelFullScreen) {
+				de.mozCancelFullScreen();
+			} else if (de.webkitCancelFullScreen) {
+				de.webkitCancelFullScreen();
+			}
+		}
+		function Planemodel() {																	//2D模式
+
+			flag_2dOr3d_switch = 0;
+		}
+		function threeDmodel() {																//3D模式
+
+			flag_2dOr3d_switch = 1;
+		}
+
+		function distanceVector(v1) {
+				var dx = v1.x - pose_x;
+				var dy = v1.y - pose_y;
+				var dz = v1.z - pose_z;
+
+				return Math.sqrt(dx * dx + dy * dy + dz * dz);
+		}
+
+		function choose_lines()
+		{
+			if(if_exist_cleareare == 1)  //存在路边线则可以切换
+			{
+				if(is_roadedgeorcleararea==0)
+				{
+					is_roadedgeorcleararea=1;
+					document.getElementById("HIGH_Line").innerHTML = "已绑定路边线";
+				}
+				else if(is_roadedgeorcleararea==1)
+				{
+					is_roadedgeorcleararea=0;
+					document.getElementById("HIGH_Line").innerHTML = "已绑定清扫线";
+				}
+			}
+		}
+
+		function replace_points_line(redorBlue)
+		{
+			if(redorBlue=="red")
+			{
+				var geometry_sphere = new THREE.SphereGeometry(0.1, 8, 8);
+				var material_sphere = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
+				var sphere = new THREE.Mesh(geometry_sphere, material_sphere);
+			}
+			else if(redorBlue == "blue")
+			{
+				var geometry_sphere = new THREE.SphereGeometry(0.05, 1, 1);
+				var material_sphere = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
+				var sphere = new THREE.Mesh(geometry_sphere, material_sphere);
+			}
+
+			if(record_i>line2.length-1)
+			{
+				var record_I=record_i-line2.length;
+				sphere.position.x = line3[record_I].x;
+				sphere.position.y = line3[record_I].y;
+				sphere.position.z = line3[record_I].z;
+			}
+			else{
+				sphere.position.x = line2[record_i].x;
+				sphere.position.y = line2[record_i].y;
+				sphere.position.z = line2[record_i].z;
+			}
+
+			pointsArray[record_i] = sphere;
+			scene.add(pointsArray[record_i]);
+		}
+		function replace_toredPoint(record_i)
+		{
+			var redorBlue = "red";
+			scene.remove(pointsArray[record_i]);
+			if(record_i>line2.length-1)
+			{
+				high_light_point_for_line = line3[record_i-line2.length].numb;
+			}
+			else
+			{
+				high_light_point_for_line = line2[record_i].numb;
+			}
+			replace_points_line(redorBlue);
+			
+		}
+		function replace_tobulePoint(record_i)
+		{
+			var redorBlue = "blue";
+			scene.remove(pointsArray[record_i]);
+			high_light_point_for_line = -1;
+			replace_points_line(redorBlue);
+		}
+
+		function create_newpoint(x,y,z)
+		{
+			var geometry_sphere = new THREE.SphereGeometry(0.1, 8, 8);
+			var material_sphere = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
+			var sphere = new THREE.Mesh(geometry_sphere, material_sphere);
+			sphere.position.x = x;
+			sphere.position.y = y;
+			sphere.position.z = z;
+			pointsArray[pointsArray.length] = sphere;
+			scene.add(pointsArray[pointsArray.length-1]);
+			create_newpoint_live = 1;
+		}
+		function delete_newpoint()
+		{
+			scene.remove(pointsArray[pointsArray.length-1]);
+			pointsArray.pop();
+			create_newpoint_live = 0;
+		}
+
+		function choose_points() {
+			if(high_light_point_for_line !=-1  )
+			{
+				if (confirm("您确定要恢复当前选点吗？")) {
+				if(create_newpoint_live==1)
+				{
+					window.alert("请先删除新建的点");
+					return;
+				}
+				if(high_light_point_for_line!=-1)
+				{
+					replace_tobulePoint(record_i);
+					document.getElementById("HIGH_Nearest_point").innerHTML = "选择最近点";
+				}		
+				}
+				return;
+			}
+			if (confirm("您确定要开始选点吗？")) {
+				var min_distance=1000;
+				var cur_distance;
+				for(var i = 0;i<pointsArray.length;i++)
+				{	
+					if(is_roadedgeorcleararea == 1 )         //过滤不同线
+					{
+						if(i>=line2.length-1)
+						{
+							continue;
+						}
+					}
+					else if(is_roadedgeorcleararea == 0 )
+					{
+						if(i<=line2.length-1)
+						{
+							continue;
+						}
+					}
+					cur_distance = distanceVector(pointsArray[i].position);
+					if(cur_distance<min_distance)
+					{
+						min_distance = cur_distance;
+						record_i = i ;						
+					}
+				}
+				replace_toredPoint(record_i);
+				document.getElementById("HIGH_Nearest_point").innerHTML = "取消最近点";
+			}
+			else {
+				return;
+			}
+		}
+
+
+
+
+		// function recovery_points() {
+
+		// 	if (confirm("您确定要恢复当前选点吗？")) {
+		// 		if(create_newpoint_live==1)
+		// 		{
+		// 			window.alert("请先删除新建的点");
+		// 			return;
+		// 		}
+		// 		if(high_light_point_for_line!=-1)
+		// 		{
+		// 			replace_tobulePoint(record_i);
+		// 		}
+		// 		else
+		// 		{
+		// 			window.alert("没有要需要恢复的点");
+		// 		}		
+		// }
+		// };
+
+
+
+		// function recovery_points() {
+
+		// 	if (confirm("您确定要恢复当前选点吗？")) {
+		// 		if(create_newpoint_live==1)
+		// 		{
+		// 			window.alert("请先删除新建的点");
+		// 			return;
+		// 		}
+		// 		if(high_light_point_for_line!=-1)
+		// 		{
+		// 			replace_tobulePoint(record_i);
+		// 		}
+		// 		else
+		// 		{
+		// 			window.alert("没有要需要恢复的点");
+		// 		}		
+		// }
+		// };
+
+		function input_newpoints() {
+
+			if(create_newpoint_live == 1)
+			{
+				if (confirm("您确定要删除新建点吗？")) {
+					delete_newpoint();
+					document.getElementById("HIGH_new_point").innerHTML = "新建替换点";	
+				}
+				return;
+			}
+
+			if (confirm("您确定要新建点吗？")) {
+				if(high_light_point_for_line!=-1)
+				{
+					var x = pose_x;
+					var y = pose_y;
+					var z = pointsArray[record_i].position.z;
+					//var sentence = "你输入的点是 x:"+x+" y:"+y+" z:"+z+" ,你确定要新建这个点吗";
+					create_newpoint(x,y,z);
+					document.getElementById("HIGH_new_point").innerHTML = "删除替换点";
+				}
+				else
+				{
+					window.alert("你还没有选择需要替换的点");
+				}		
+			}
+			};
+
+
+		function delete_newpoints() {
+
+			if(create_newpoint_live == 0)
+			{
+				window.alert("没有需要删除的点");
+				return;
+			}
+			if (confirm("您确定要删除新建点吗？")) {
+			
+				delete_newpoint();	
+			}
+			};
+
+		function moveX_newpoints()
+		{
+			if(create_newpoint_live == 0)
+			{
+				window.alert("没有可以移动的点");
+				return;
+			}
+				var x_move = 0.1;
+				pointsArray[pointsArray.length-1].position.x=parseFloat(pointsArray[pointsArray.length-1].position.x)+parseFloat(x_move);	
+		}
+		function moveXD_newpoints()
+		{
+			if(create_newpoint_live == 0)
+			{
+				window.alert("没有可以移动的点");
+				return;
+			}
+				var x_move = -0.1;
+				pointsArray[pointsArray.length-1].position.x=parseFloat(pointsArray[pointsArray.length-1].position.x)+parseFloat(x_move);	
+		}
+
+		function moveY_newpoints()
+		{
+			if(create_newpoint_live == 0)
+			{
+				window.alert("没有可以移动的点");
+				return;
+			}
+				var y_move = 0.1;
+				pointsArray[pointsArray.length-1].position.y=parseFloat(pointsArray[pointsArray.length-1].position.y)+parseFloat(y_move);	
+		}
+		function moveYD_newpoints()
+		{
+			if(create_newpoint_live == 0)
+			{
+				window.alert("没有可以移动的点");
+				return;
+			}
+				var y_move = -0.1;
+				pointsArray[pointsArray.length-1].position.y=parseFloat(pointsArray[pointsArray.length-1].position.y)+parseFloat(y_move);	
+		}
+		// function delete_lines() {
+		// 	for (var i = 0; i < line_object_Array.length; i++) {
+		// 		scene.remove(line_object_Array[i]);
+		// 	}
+		// }
+		function replace_points(dif_line,record_I)
+		{
+			//log = dif_line[record_I].x.toFixed(4)+","+dif_line[record_I].y.toFixed(4)+","+dif_line[record_I].z.toFixed(4); 原始点记录 	
+			dif_line[record_I].x = pointsArray[record_i].position.x;
+			dif_line[record_I].y = pointsArray[record_i].position.y;
+			dif_line[record_I].z = pointsArray[record_i].position.z;
+			log =dif_line[record_I].type +","+dif_line[record_I].numb+","+dif_line[record_I].position+","+dif_line[record_I].x.toFixed(4)+","+dif_line[record_I].y.toFixed(4)+","+dif_line[record_I].z.toFixed(4);
+			log_sum = log_sum + log +"\n";
+		}
+		function comfire_replace_points()
+		{
+			if(create_newpoint_live == 1 || high_light_point_for_line !=-1)
+			{
+				if(confirm("你确定要替换该点吗？"))
+				{
+					scene.remove(pointsArray[record_i]);
+					pointsArray[record_i]=pointsArray[pointsArray.length-1];
+					pointsArray.pop();
+					scene.add(pointsArray[record_i]);
+					if(record_i>line2.length-1)
+					{
+						var record_I=record_i-line2.length;
+						replace_points(line3,record_I);
+					}
+					else
+					{
+						var record_I=record_i;
+						replace_points(line2,record_I);
+					}
+					replace_tobulePoint(record_i);
+					record_i = -1;
+					create_newpoint_live = 0;
+					high_light_point_for_line = -1;
+					document.getElementById("HIGH_new_point").innerHTML = "新建替换点";
+					document.getElementById("HIGH_Nearest_point").innerHTML = "选择最近点";
+					return;
+				}
+			}
+			window.alert("请检查是否选择了需要的替换点和创建新的点");
+		}
+
+		function submit_datatoService()
+		{
+			if(confirm("你确定要保存提交数据吗？"))
+			{
+				switch_submit_data = 1;
+			}
+		}
+
+	</script>		
+</head>
+	
+	
+<div id="container">
+	<!-- <select style="opacity:0.8;width:120px;height:50px;font-size:15px;">
+		<option onclick="exitFullscreen('body')">窗口模式</option>
+		<option onclick="requestFullScreen('body')">全屏模式</option>
+		<option onclick="Planemodel()">2D模式</option>
+		<option onclick="threeDmodel()">3D模式</option>
+	</select> -->
+	<!-- <select style="opacity:0.8;width:120px;height:50px;font-size:15px;">
+		<option onclick="choose_points()">1.选择最近点</option>
+		<option onclick="recovery_points()">2.恢复选择</option>
+		<option onclick="input_newpoints()">3.新建替换点</option>
+		<option onclick="delete_newpoints()">4.删除替换点</option>
+		<option onclick="comfire_replace_points()">5.替换该点</option>
+		<option onclick="submit_datatoService()">6.保存改动</option>
+	</select> -->
+	<!-- <button onclick="requestFullScreen('body')">&nbsp; 全屏模式 &nbsp;</button>
+	<button onclick="exitFullscreen('body')">&nbsp; 窗口模式 &nbsp;</button>
+	<button onclick="Planemodel()">&nbsp; 2D模式 &nbsp;</button>
+	<button onclick="threeDmodel()">&nbsp; 3D模式 &nbsp;</button> -->
+	<button onclick="choose_lines()" id = "HIGH_Line">&nbsp; 已绑定路边线 &nbsp;</button> 
+	<button onclick="choose_points()" id = "HIGH_Nearest_point">&nbsp; 选择最近点 &nbsp;</button>
+	<button onclick="input_newpoints()" id = "HIGH_new_point">&nbsp; 新建替换点 &nbsp;</button>
+	<!-- <button onclick="delete_newpoints()">&nbsp; 删除替换点 &nbsp;</button> -->
+	<button onclick="comfire_replace_points()">&nbsp; 替换该点 &nbsp;</button>
+	<button onclick="submit_datatoService()">&nbsp; 保存改动  &nbsp;</button>
+
+	<button onclick="moveX_newpoints()" style="opacity:0.5;width:50px;height:50px;font-size:15px;position:absolute; right:0px; bottom:130px;">&nbsp;+0.1&nbsp;</button>
+	<button onclick="moveXD_newpoints()" style="opacity:0.5;width:50px;height:50px;font-size:15px;position:absolute; right:120px; bottom:130px;">&nbsp;-0.1&nbsp;</button>
+	<button onclick="moveY_newpoints()" style="opacity:0.5;width:50px;height:50px;font-size:15px;position:absolute; right:60px; bottom:200px;">&nbsp;+0.1&nbsp;</button>
+	<button onclick="moveYD_newpoints()" style="opacity:0.5;width:50px;height:50px;font-size:15px;position:absolute; right:60px; bottom:60px;">&nbsp;-0.1&nbsp;</button>
+
+
+	<table width="10%" cellspacing="1" cellpadding="1" bgcolor=#D8D8D8 border="1"  height="10" style="position:absolute; left:5px; bottom:20px;">
+		<tr>
+			<td width="10%" class="btbg font-center titfont" rowspan="1">x</td>
+			<td width="10%" class="btbg font-center titfont" rowspan="1">y</td>
+			<td width="10%" class="btbg font-center titfont" rowspan="1">z</td>
+		</tr>
+		<tr>
+			<td id="position.x">NULL&nbsp;</td>
+			<td id="position.y">NULL&nbsp;</td>
+			<td id="position.z">NULL&nbsp;</td>
+		</tr>
+	
+	</table>
+</div>
+
+</body>
+
+</html>

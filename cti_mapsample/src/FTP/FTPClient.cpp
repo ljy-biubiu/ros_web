@@ -22,6 +22,8 @@ std::string CFTPClient::s_strCurlTraceLogDirectory;
  * @param Logger - a callabck to a logger function void(const std::string&)
  *
  */
+
+
 CFTPClient::CFTPClient(LogFnCallback Logger)
     : m_oLog(std::move(Logger)),
       m_iCurlTimeout(0),
@@ -446,7 +448,7 @@ const bool CFTPClient::RemoveFile(const std::string &strRemoteFile) const {
  * 15:04:45 2016
  * @endcode
  */
-const bool CFTPClient::Info(const std::string &strRemoteFile, struct FileInfo &oFileInfo) const {
+const bool CFTPClient::Info_(const std::string &strRemoteFile, struct FileInfo &oFileInfo) const {
    if (strRemoteFile.empty()) return false;
 
    if (!m_pCurlSession) {

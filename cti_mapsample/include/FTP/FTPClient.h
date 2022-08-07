@@ -151,7 +151,7 @@ class CFTPClient {
    const bool RemoveFile(const std::string &strRemoteFile) const;
 
    /* Checks a single file's size and mtime from an FTP server */
-   const bool Info(const std::string &strRemoteFile, struct FileInfo &oFileInfo) const;
+   const bool Info_(const std::string &strRemoteFile, struct FileInfo &oFileInfo) const;
 
    const bool List(const std::string &strRemoteFolder, std::string &strList, bool bOnlyNames = true) const;
 

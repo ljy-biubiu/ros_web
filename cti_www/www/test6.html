@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - geometry - vertex colors</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+		
+		<script type="text/javascript"
+			src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+		<script src="js/roslibjs/roslib.js"></script>
+		<script src="js/design/WEB_PARAM.js"></script>
+		<script src="js/design/code_tranlate.js"></script>
+		<style>
+			body {
+				background-color: #fff;
+				color: #444;
+			}
+			a {
+				color: #08f;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="container"></div>
+		<div id="info"><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> webgl - vertex colors</div>
+	<script>
+
+		// Connecting to ROS
+		var ros = new ROSLIB.Ros({
+			url: IP_PORT
+		});
+		var pose_x;
+		var pose_y;
+		var pose_z;
+		var yaw;
+		// Subscribing to a Topic
+		var listener_ndt_pose = new ROSLIB.Topic({
+			ros: ros,
+			name: '/base_link_pose',
+			messageType: 'geometry_msgs/PoseStamped'
+		});
+
+		listener_ndt_pose.subscribe(function (message) {
+
+			//console.log(message.pose.position.x);
+			pose_x = message.pose.position.x;
+			pose_y = message.pose.position.y;
+			pose_z = message.pose.position.z;
+			// document.getElementById(s1.concat(s2)).innerHTML = obj_json[i].name;
+			// document.getElementById(s1.concat(s3)).innerHTML = obj_json[i].statu;
+			// yaw (z-axis rotation)
+			var siny_cosp = 2 * (message.pose.orientation.w * message.pose.orientation.z + message.pose.orientation.x * message.pose.orientation.y);
+			var cosy_cosp = 1 - 2 * (message.pose.orientation.y * message.pose.orientation.y + message.pose.orientation.z * message.pose.orientation.z);
+			yaw = Math.atan2(siny_cosp, cosy_cosp);
+
+		});
+
+ 
+		</script>
+
+
+
+
+
+		<script type="module">
+
+			import * as THREE from './three.js/build/three.module.js';
+
+			import Stats from './three.js/examples/jsm/libs/stats.module.js';
+			import { PCDLoader } from './three.js/examples/jsm/loaders/PCDLoader.js';
+			import { TrackballControls } from './three.js/examples/jsm/controls/TrackballControls.js';
+
+			let container, stats;
+
+			let camera, scene, renderer;
+
+			let mouseX = 0, mouseY = 0;
+
+			let windowHalfX = window.innerWidth / 2;
+			let windowHalfY = window.innerHeight / 2;
+
+
+
+
+
+			container = document.getElementById( 'container' );
+
+			camera = new THREE.PerspectiveCamera( 20, window.innerWidth / window.innerHeight, 1, 10000 );
+			camera.position.z = 2000;
+			// camera.up.set(0, 0, 1);
+			camera.position.y = 100;
+			camera.position.x = 100;
+
+			scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0xffffff );
+
+
+			var geometry = new THREE.BoxGeometry( 10, 6, 10 );
+			var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+			var cube = new THREE.Mesh( geometry, material );
+			cube.position.x = 0;
+			cube.position.y = 0;
+			cube.position.z = 0;
+			scene.add( cube );
+
+			var loader = new PCDLoader();
+			const wireframeMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true, transparent: true } );
+			var path;
+			path = "pcd/wkyc.pcd";
+
+			//23 24 42
+			//create a blue LineBasicMaterial
+			var material111 = new THREE.LineBasicMaterial({ color: 0x0000ff });
+
+			var geometry111 = new THREE.BufferGeometry();
+			const pointsArray = new Array();
+			pointsArray.push(new THREE.Vector3(-33.0015,-84.6682,0));
+			pointsArray.push(new THREE.Vector3(-33.0631,-89.6809,0));
+			pointsArray.push(new THREE.Vector3(2.8382,-89.7488,0));
+
+			pointsArray.push(new THREE.Vector3(2.8751,-87.3069,0));
+			pointsArray.push(new THREE.Vector3(9.1949,-87.4537,0));
+			pointsArray.push(new THREE.Vector3(9.2996,-84.1445,0));
+
+			pointsArray.push(new THREE.Vector3(15.4336,-84.1423,0));
+			pointsArray.push(new THREE.Vector3(15.3895,-83.7353,0));
+			pointsArray.push(new THREE.Vector3(12.5564,-83.8143,0));
+
+			pointsArray.push(new THREE.Vector3(9.0092,-83.7554,0));
+			pointsArray.push(new THREE.Vector3(8.8512,-86.4263,0));
+			pointsArray.push(new THREE.Vector3(8.3525,-86.7042,0));
+
+			pointsArray.push(new THREE.Vector3(3.2343,-86.5619,0));
+			pointsArray.push(new THREE.Vector3(2.4134,-86.5408,0));
+			pointsArray.push(new THREE.Vector3(2.3057,-89.2439,0));
+			
+			pointsArray.push(new THREE.Vector3(-32.5613,-89.1405,0));
+			pointsArray.push(new THREE.Vector3(-32.5049,-84.8595,0));
+			pointsArray.push(new THREE.Vector3(-32.9430,-84.7739,0));
+			
+			geometry111.setFromPoints(pointsArray)
+			var line = new THREE.Line(geometry111, material111);
+			scene.add(line);
+
+
+
+			renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			container.appendChild(renderer.domElement);
+
+			loader.load(path, function (points) {	
+			points.scale.multiplyScalar(1);                                                         //物体的局部缩放。默认值是Vector3( 1, 1, 1 )。 
+			//points.geometry.center();
+			scene.add(points);
+			//center = points.geometry.boundingSphere.center;
+			//controls.target.set(center.x, center.y, center.z);
+    		controls.update();
+			console.log("-----------------------------------------------"); },
+			null,function (error) {alert(error.target.statusText); 1});
+			
+
+			//鼠标事件
+			var controls = new TrackballControls(camera, renderer.domElement);                                  //轨迹球控件，最常用的控件，可以使用鼠标轻松的移动、平移，缩放场景。
+
+			controls.rotateSpeed = 20;                                                                         //鼠标控制速度
+			controls.zoomSpeed = 3;                                                                           //鼠标控制速度
+			controls.panSpeed = 2;                                                                            //鼠标控制速度
+			
+			controls.staticMoving = true;                                                                       // 静止移动，为 true 则没有惯性
+
+			controls.minDistance = 3;
+			controls.maxDistance = 0.3 * 10000;
+
+			animate();
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+
+			}
+
+			function render() {
+
+				cube.position.x=pose_x;
+				cube.position.y=pose_y;
+				cube.rotation.z = yaw;
+				controls.update();
+				//camera.lookAt( scene.position );
+
+				renderer.render( scene, camera );
+
+			}
+
+			window.addEventListener('resize', onWindowResize, false);                                          //根据浏览器窗口的变动更新相机的aspect以及 渲染器的渲染范围，实现自适应的效果。
+			//window.addEventListener('keypress', keyboard);
+			
+			function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;                                        //摄像机视锥体的长宽比，通常是使用画布的宽/画布的高。默认值是1（正方形画布）。
+			camera.updateProjectionMatrix();                                                               //更新摄像机投影矩阵。在任何参数被改变以后必须被调用。
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			controls.handleResize();
+}
+
+
+		</script>
+
+	</body>
+</html>
+
+

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script type="text/javascript"
+    src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script src="../js/roslibjs/roslib.js"></script>
+  <script src="../js/design/WEB_PARAM.js"></script>
+  <script src="../js/diary/demo.json"></script>
+
+  <link rel="stylesheet" type="text/css" href="../css/style.css">
+
+
+  <style>
+    .camera {
+      float: middle;
+      margin: 50px;
+      position: absolute;
+      left: 50px;
+      top: 300px;
+    }
+  </style>
+  <script type="text/javascript" type="text/javascript">
+
+    function warn_() {
+      if (confirm("你确定开始校准摄像头吗？")) {
+        var code = prompt("请输入管理员密码")
+        if (code != 123456) {
+          alert("密码错误！");
+          window.location.href = "../tool.html"
+        }
+        alert("清除或校准后请务必检查校准结果");
+      }
+    }
+
+    warn_();
+
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+      url: IP_PORT
+    });
+    console.log(IP_PORT);
+    var color = '#99bebe ';
+    var style;
+
+    function createStyle() {
+      style = document.createElement('style');
+      style.type = 'text/css';
+    }
+    function changeBackgroundColor() {
+      if (!style.parentNode) document.head.appendChild(style);
+    }
+    function changeColor() {
+      var color = "yellow|green|blue";
+      color = color.split("|");
+      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
+    }
+    setInterval("changeColor()", 500);
+    createStyle();
+    changeBackgroundColor();
+
+    //判断是否连接成功并输出相应的提示消息到web控制台
+    ros.on('connection', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+      style.innerHTML = 'body {background-color: #bebfc0 ;}';
+    });
+
+    ros.on('error', function (error) {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+    ros.on('close', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+      alert("服务器连接中断，请检查wifi状态，并刷新当前页面");
+    });
+
+
+    // Subscribing to a Topic
+    var node_live = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/monitor/node_alive',
+      messageType: 'diagnostic_msgs/DiagnosticArray'
+    });
+
+    node_live.subscribe(function (message) {
+      for (var i = 0, j = 0; i < message.status.length; i++) {
+
+        if ( message.status[i].name == "contrast_pose") {
+          if(  message.status[i].level != 0 )
+          {
+            if(message.status[i].message.split('/').pop().trim() !=0 )
+            {
+              document.getElementById("statu").innerHTML = "摄像头连接中断"; 
+            }
+            else
+            {
+              document.getElementById("statu").innerHTML = "连接正常";
+              return;
+            }
+          }          
+        }       
+      }
+      document.getElementById("statu").innerHTML = "摄像头未连接"; 
+    });
+
+
+	// Subscribing to a Topic
+    var listener_camera2_msg = new ROSLIB.Topic({
+      ros: ros,
+      name: 'contrast_pose',
+      messageType: 'cti_msgs/TargetPose'
+    });
+
+    listener_camera2_msg.subscribe(function (message) {
+      console.log(message.pose.pose.position.x);
+
+      document.getElementById("X").innerHTML = message.pose.pose.position.x.toFixed(3);
+      document.getElementById("Y").innerHTML = message.pose.pose.position.y.toFixed(3);
+      document.getElementById("Z").innerHTML = message.pose.pose.position.z.toFixed(3);
+    });
+
+
+    // Publishing a Topic
+    var cmd_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/rosweb/cmd',
+      messageType: 'std_msgs/Int32'
+    });
+
+    var command = new ROSLIB.Message({
+      data: 0
+    });//创建一个message
+    function send_command(message) {
+      command.data = message;
+      cmd_pub.publish(command);//发布消息
+    }
+
+    // Subscribing to a Topic
+    var listener_ = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/web/camera1',
+      messageType: 'std_msgs/String'
+    });
+
+    listener_.subscribe(function (message) {
+      //console.log("sdasdasdasdasd");
+      var ima = document.getElementById("tus");
+      ima.src = message.data
+
+    });
+
+    // Publishing a Topic
+    var cmd_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/rosweb/cmd',
+      messageType: 'std_msgs/Int32'
+    });
+
+    var command = new ROSLIB.Message({
+      data: 0
+    });//创建一个message
+    function send_command(message) {
+      command.data = message;
+      cmd_pub.publish(command);//发布消息
+    }
+
+
+
+
+    // window.onbeforeunload = onbeforeunload_handler;
+    // window.onunload = onunload_handler;
+    // function onbeforeunload_handler(){
+    //   close_press();
+    //   var warning="确认退出?";
+    //   return warning;
+    // }
+
+
+
+    function start_press() {
+      if (confirm("你确定要打开相机吗？")) {
+        send_command(11);
+      }
+      //location.replace(document.referrer);
+    }
+    function calibration_press() {
+      if (confirm("你确定要开始校准吗？")) {
+        send_command(13);
+      }
+      //location.replace(document.referrer);
+    }
+    function close_press() {
+      if (confirm("你确定要关闭相机吗？")) {
+        send_command(12);
+      }
+      //location.replace(document.referrer);
+    }
+    function clear_press() {
+      if (confirm("你确定要清零吗？")) {
+        send_command(14);
+      }
+      // location.replace(document.referrer);
+    }
+
+  </script>
+
+
+<body>
+  <div style="margin-left:20%;padding:1px 16px;height:1000px;overflow:hidden;">
+
+    <div class="srv_state">
+      <p id="connect_status">服务器状态（未响应）</p>
+
+    </div>
+
+    <title>无人速度日志：</title>
+    <h1 id="license">阳光无人车</h1>
+
+    <script language="javascript">
+      LICENSE = '摄像头校准工具：' + LICENSE;
+      document.getElementById("license").innerHTML = LICENSE;
+    </script>
+
+    <div>
+      <br /><br />
+      <p class="inline">
+      <h4 class="inline">X：</h4>
+      <p id="X" class="inline">无</p>
+      <h4 class="inline">Y：</h4>
+      <p id="Y" class="inline">无</p>
+      <h4 class="inline">YAW：</h4>
+      <p id="Z" class="inline">无</p>
+      <h4 class="inline">statu：</h4>
+      <p id="statu" class="inline">无</p>
+      </p>
+    </div>
+
+    <button onclick="start_press()" style="width:200px;">&nbsp; 打开相机 &nbsp;</button>&nbsp;&nbsp;
+    <button onclick="clear_press()" style="width:200px;">&nbsp; 清除 &nbsp;</button>&nbsp;&nbsp;
+    <button onclick="calibration_press()" style="width:200px;">&nbsp; 校准相机 &nbsp;</button>&nbsp;&nbsp;
+    <button onclick="close_press()" style="width:200px;">&nbsp; 关闭相机 &nbsp;</button>&nbsp;&nbsp;
+
+    <div></div>
+    <br /><br /><br /><br />
+    <div align="center">
+      <img id="tus" src="image/lidar_ma.png" width="1280px" height="720px">
+    </div>
+
+  </div>
+  <!-- <div class="icon" >
+  <img src="image/002.png" class="icon" width="400px" height="350px" style="z-index: -1;"/>
+  </div> -->
+
+</body>
+
+</html>

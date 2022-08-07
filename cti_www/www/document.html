@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+		
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>无人车操作指南</title>
+    <link href="static/css/markdown.css" rel="stylesheet">
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script type="text/javascript" src='./static/js/marked.min.js'></script>
+    
+    <!-- <script>mermaid.initialize({startOnLoad:true});</script> -->
+    <!-- <script> -->
+      
+    <style>
+      .content{
+          height: 3000px;
+          font-size: 17px;}
+      .toTop{
+          width:160px;
+          height: 100px;
+          position: fixed;
+          right: 20px;
+          bottom: 20px;
+          font-size: 20px;
+          font-family: "微软雅黑";
+          font-weight: bold;
+          letter-spacing: 5px;
+          display: none;}
+    </style>
+
+
+    <script type="text/javascript">
+      function showMarkdown() {
+        var xmlhttp;
+        if (window.XMLHttpRequest) {
+          xmlhttp = new XMLHttpRequest();
+        } else { 
+          xmlhttp = new ActiveXObject('Microsoft.XMLHttp');
+        }
+  
+        xmlhttp.onreadystatechange = function() {
+          if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            var html = marked(xmlhttp.responseText);
+            document.getElementById('content').innerHTML = `<link rel="stylesheet" href="static/css/markdown.css">
+                                                            <style>
+                                                              .markdown-body {
+                                                                box-sizing: border-box;
+                                                                min-width: 200px;
+                                                                max-width: 980px;
+                                                                margin: 0 auto;
+                                                                padding: 45px;
+                                                              }
+                                                            </style>
+                                                            <article class="markdown-body">
+                                                              ${html}
+                                                            </article>`;
+          }
+        }
+        
+        // 向服务器发送请求
+        xmlhttp.open('GET', './document/errorcode_document/readmes.md', true);
+        xmlhttp.send();
+      }
+
+    </script>
+    <script>
+        window.onload = function () {
+            new showMarkdown();
+        };
+    </script>
+
+
+<script>
+  window.addEventListener("load",function(){
+   
+       var toTop = document.getElementById("toTop");
+       var posY = 0;
+   
+       window.addEventListener("scroll",function(){
+           posY = window.pageYOffset || document.documentElement.scrollTop;
+   
+           if(posY == 0){
+             toTop.style.display = "none";
+          }else{
+              toTop.style.display = "block"
+          }
+      })
+  
+      toTop.addEventListener("click",function(){
+              var des = 0;
+              var start = posY;
+  
+              moveSlowly(start,des);
+      })
+  
+  })
+  
+  var timer = null;
+  function moveSlowly(start,des,time){
+      clearInterval(timer);
+      var speedTime = time || 100;
+      var distance = des - start;
+      var speed = distance/speedTime;
+      var pos = start;
+      var i = 1;
+  
+      timer = setInterval(function(){
+  
+          if(i == speedTime){
+              document.documentElement.scrollTop = document.body.scrollTop = des;
+              clearInterval(timer);
+          }else{
+              pos = pos + speed;
+              document.documentElement.scrollTop = document.body.scrollTop = pos;
+              i++;
+          }
+  
+      },1)
+  }
+</script>
+
+</head>
+
+<body>
+    <div id="content"></div>
+    <input type="button" id="toTop" class="toTop" value="返回顶部↑">
+</body>
+
+</html>

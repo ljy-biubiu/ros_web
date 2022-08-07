@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script type="text/javascript"
+    src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script src="../js/roslibjs/roslib.js"></script>
+  <script src="../js/design/WEB_PARAM.js"></script>
+  <script src="../js/require.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="../css/style.css">
+
+
+  <script type="text/javascript" type="text/javascript">
+
+  function warn_() {
+      if (confirm("确定需要打开此页面吗？")) {
+        var code = prompt("请输入管理员密码")
+        if (code != 123456) {
+          alert("密码错误！");
+          window.location.href = "../tool.html"
+        }
+      }
+      else
+      {
+        window.location.href = "../tool.html"
+      }
+    }
+
+    warn_();  
+
+    var aa = window.localStorage.getItem('/home/ljy/dev/catkin_wx/src/cti_data_viewer/cti_www/www/license.js'); //读存储的数据
+    var aaObj = JSON.parse(aa); //将JSON字符串转化成JSON对象方便读取
+    var LICENSE = aaObj.license;
+    var IP_PORT = aaObj.ip_port;
+
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+      url: IP_PORT
+    });
+    
+    console.log(LICENSE);
+    console.log(IP_PORT);
+    var color = '#99bebe ';
+    var style;
+
+    function createStyle() {
+      style = document.createElement('style');
+      style.type = 'text/css';
+    }
+    function changeBackgroundColor() {
+      if (!style.parentNode) document.head.appendChild(style);
+    }
+    function changeColor() {
+      var color = "yellow|green|blue";
+      color = color.split("|");
+      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
+    }
+    setInterval("changeColor()", 500);
+    createStyle();
+    changeBackgroundColor();
+
+    //判断是否连接成功并输出相应的提示消息到web控制台
+    ros.on('connection', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+      style.innerHTML = 'body {background-color: #bebfc0 ;}';
+    });
+
+    ros.on('error', function (error) {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+    ros.on('close', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+      alert("服务器连接中断，请检查wifi状态，并刷新当前页面");
+    });
+
+    // Publishing a Topic
+    var cmd_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/rosweb/cmd',
+      messageType: 'std_msgs/Int32'
+    });
+
+    var command = new ROSLIB.Message({
+      data: 0
+    });//创建一个message
+    function send_command(message) {
+      command.data = message;
+      cmd_pub.publish(command);//发布消息
+    }
+
+    // Subscribing to a Topic
+    var listener = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/rosweb/state',
+      messageType: 'std_msgs/String'
+    });
+
+    listener.subscribe(function (message) {
+      var jsonObj = window.JSON.parse(message.data);
+      document.getElementById("run_state").innerHTML = jsonObj.runstate;
+      document.getElementById("sensor_state").innerHTML = jsonObj.sensorstate;
+      document.getElementById("longitude").innerHTML = jsonObj.longitude;
+      document.getElementById("latitude").innerHTML = jsonObj.latitude;
+      document.getElementById("altitude").innerHTML = jsonObj.altitude;
+      document.getElementById("lat_err").innerHTML = jsonObj.lat_err;
+      document.getElementById("lon_err").innerHTML = jsonObj.lon_err;
+      document.getElementById("sats_used").innerHTML = jsonObj.sats_used;
+      document.getElementById("message").innerHTML = jsonObj.message;
+
+      aa = document.getElementById("message");
+      aa.style.backgroundColor = "grap";
+      if (jsonObj.message == "建图异常，请处理...") {
+        aa.style.backgroundColor = "red";
+      }
+
+    });
+
+    // Publishing a Topic
+    var navRelocate_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cloud_scheduling_node/request/nav_relocate',
+      messageType: 'cti_rblite_msgs/NavRelocate'
+    });
+
+    function send_navRelocate(message) {
+      //command.data = message;
+      NavRelocate_data.map_name = message;
+      navRelocate_pub.publish(NavRelocate_data);//发布消息
+    }
+
+    var NavRelocate_head = new ROSLIB.Message({
+      id: "",
+      robot_id: "",
+      coopMode: 0,
+      command_type: "",
+      command_state: "",
+      stamp: 0
+    });//创建一个message
+
+    var position_Point = new ROSLIB.Message({
+      x: 0,
+      y: 0,
+      z: 0
+    });//创建一个message
+
+    var position_Quaternion = new ROSLIB.Message({
+      x: 0,
+      y: 0,
+      z: 0,
+      w: 0
+    });//创建一个message
+
+    var geometry_msgs_Pos_data = new ROSLIB.Message({
+      position: position_Point,
+      orientation: position_Quaternion
+    });//创建一个message
+
+    var NavRelocate_data = new ROSLIB.Message({
+      nav_header: NavRelocate_head,
+      latitude: 0,
+      longitude: 0,
+      altitude: 0,
+      direction: 0,
+      map_name: 0,
+      pose: geometry_msgs_Pos_data
+    });//创建一个message
+
+
+
+  </script>
+
+<body>
+  <div style="padding:1px 16px;height:1000px;">
+
+    <div class="srv_state">
+      <p id="connect_status">服务器状态（未响应）</p>
+      <p id="run_state">当前状态</p>
+      <p id="sensor_state">传感器状态</p>
+    </div>
+
+    <title>阳光无人车</title>
+    <h1 id="license">阳光无人车</h1>
+
+
+    <script language="javascript">
+      function comfirm_press_buildmap() {
+        if (confirm("您确定要开始建图吗？")) {
+          send_command(1);
+        }
+        else {
+        }
+      }
+      function comfirm_press_endmap() {
+        if (confirm("您确定要结束建图吗？")) {
+          send_command(2);
+        }
+        else {
+        }
+      }
+      function comfirm_press_upload() {
+        if (confirm("您确定要开始上传地图吗？")) {
+          send_command(3);
+        }
+        else {
+        }
+      }
+      function custom_close() {
+        if (confirm("您确定要关机吗？")) {
+          //send_command(-1);
+          console.log(";;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        }
+        else {
+        }
+      }
+      function confirm_newPlace() {
+        if (confirm("您确定要更改园区吗？")) {
+          //send_command(-1);
+          var myselect = document.getElementById("text_");
+          send_navRelocate(myselect.value);
+          console.log(myselect.value);
+        }
+      }
+
+
+      LICENSE = '建图模块' + LICENSE;
+      document.getElementById("license").innerHTML = LICENSE;
+    </script>
+
+    <div>
+      <table width="60%" cellspacing="1" cellpadding="9" bgcolor=#D8D8D8 border="1" align="center" height="100">
+        <tr>
+          <td width="5%" class="btbg font-center titfont" rowspan="1">INFOMATION</td>
+          <td width="10%" class="btbg font-center titfont" rowspan="1">STATU</td>
+        </tr>
+        <tr>
+
+        </tr>
+        <tr>
+          <td>longitude:&nbsp;</td>
+          <td id="longitude">NULL&nbsp;</td>
+        </tr>
+        <tr>
+          <td>latitude:&nbsp;</td>
+          <td id="latitude">NULL&nbsp;</td>
+        </tr>
+        <tr>
+          <td>altitude:&nbsp;</td>
+          <td id="altitude">NULL&nbsp;</td>
+        </tr>
+        <tr>
+          <td>lat_err:&nbsp;</td>
+          <td id="lat_err">NULL&nbsp;</td>
+        </tr>
+        <tr>
+          <td>lon_err:&nbsp;</td>
+          <td id="lon_err">NULL&nbsp;</td>
+        </tr>
+        <tr>
+          <td>sats_used:&nbsp;</td>
+          <td id="sats_used">NULL&nbsp;</td>
+        </tr>
+        <tr>
+          <td>message:&nbsp;</td>
+          <td id="message">NULL&nbsp;</td>
+        </tr>
+        <br /><br />
+      </table>
+      <br /><br />
+    </div>
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+    <button onclick="comfirm_press_buildmap()" style="width:200px;">&nbsp; 开始 &nbsp;</button>
+    <button onclick="comfirm_press_endmap()" style="width:200px;">&nbsp; 结束 &nbsp;</button>
+    <button onclick="comfirm_press_upload()" style="width:200px;">&nbsp;数据上传&nbsp;</button><br />
+    <input id="btnClose" type="button" value="关机"
+      style="width:200px;height:50px;font-size:30px;position: absolute;right: 0;top: 0;" onClick="custom_close()" />
+      <br /><br /><br />
+    <div>
+      <HR color=#1C1C1C SIZE=5>
+      <h1 id="license">部署模块</h1>
+      <br /><br /><br />
+
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      园区名：
+      <input type="text" id="text_" value="null" style="width:300px;height: 50px;">
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <button onclick="confirm_newPlace()" style="width:200px;">&nbsp; 确认 &nbsp;</button>
+
+    </div>
+
+    <div class="icon">
+      <img src="../image/002.png" class="icon" width="400px" height="350px" style="z-index: -1;" />
+    </div>
+
+</body>
+
+</html>
