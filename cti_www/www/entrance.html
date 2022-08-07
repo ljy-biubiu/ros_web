@@ -1,0 +1,153 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<script type="text/javascript"
+    src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script src="js/roslibjs/roslib.js"></script>
+<script src="js/design/WEB_PARAM.js"></script>
+<script type="text/javascript" type="text/javascript"></script>
+<title>登录界面</title>
+
+<style>
+* {
+    padding: 0;
+    margin: 0;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+}
+
+.cms_login {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    background-repeat: no-repeat;
+    background-image: url('img/p.jpg');
+    background-size: 100% 100%;
+}
+
+.cms_login_container {
+    width: 600px;
+    height: 360px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    box-shadow: 0px 0px 10px #ccc;
+    background-color: #fff;
+    margin: auto;
+    opacity: 0.8;
+}
+
+.cms_login_text {
+    height: 100px;
+    width: 100%;
+    line-height: 80px;
+    text-align: center;
+    font-size: 30px;
+}
+
+.cms_login_table {
+    font-size: 18px;
+}
+
+/* 统一盒子样式 */
+.divBox {
+    height: 50px;
+    width: 100%;
+    line-height: 50px;
+    text-align: center;
+}
+
+.cms_login_ipt {
+    height: 30px;
+    width: 290px;
+    padding-left: 5px;
+    border-radius: 5px;
+    outline: none;
+}
+
+input:focus {
+    border-radius: 5px;
+    outline: none;
+    border: 2px solid #66afe9;
+    box-shadow: inset 0 2px 2px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, 0.6);
+}
+
+.margin_right10 {
+    margin-right: 10px;
+}
+
+.margin_top60 {
+    margin-top: 60px;
+}
+
+.login_btn {
+    width: 360px;
+    height: 100%;
+    background-color: #1360a7;
+    border-radius: 10px;
+    outline: none;
+    font-size: 24px;
+    color: white;
+    letter-spacing: 24px;
+}
+
+.login_btn:hover {
+    background-color: #1e5d5d;
+}
+</style>
+</head>
+
+<script>
+    var msg = {
+        license: 's',
+        ip_port: ''
+    };
+    
+    function comfirm_press()
+    {
+        Lisenseq = document.getElementById("numb").value;
+        ip_PORT = 'ws://cti' + document.getElementById("numb").value + '.webviz.sunny-ctirobot.club:6001';
+        msg.license = Lisenseq;
+        msg.ip_port = ip_PORT;
+        /*-----begin-------*/
+        var f = JSON.stringify(msg); //转化成JSON字符串
+        window.localStorage.setItem('/home/ljy/dev/catkin_wx/src/cti_data_viewer/cti_www/www/license.js', f); //存储到本地
+        /*------end-------*/
+        var aa = window.localStorage.getItem('/home/ljy/dev/catkin_wx/src/cti_data_viewer/cti_www/www/license.js'); //读存储的数据
+        var aaObj = JSON.parse(aa); //将JSON字符串转化成JSON对象方便读取
+        window.open("vihicle_GB.html");
+    }
+    
+</script>
+
+<body>
+    <p id="pp"></p>
+<div class="cms_login">
+<div class="cms_login_container">
+    <div class="cms_login_text">请选择需要登录的无人车</div>
+    <div class="cms_login_table">
+        <form action="" method="POST">
+            <div class="divBox">
+                <span class="margin_right10">车牌</span>
+                <input type="text" placeholder="请输入车牌号" id="numb" class="cms_login_ipt">
+            </div>
+            <div class="divBox margin_top60">
+                <button onclick="comfirm_press()"class="login_btn">登录</button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</body>
+
+</html>

@@ -1,35 +1,212 @@
 body
 {
-    background-color:#d0e4fe
-}
-h1
-{
-    color:orange;
-    text-align:center;
+    background-color:#bebfc0 
 }
 div
 {
-    color:orange;
+    color:rgb(51, 35, 6);
     font-family:"Times New Roman";
     font-size:25px;
 }
 label
 {
     font-family:"Times New Roman";
-    font-size:25px;
+    font: size 40px;
 }
 span
 {
     font-family:"Times New Roman";
-    font-size:25px;
+    font-size:40px;
 }
 p
 {
     font-family:"Times New Roman";
-    font-size:30px;
+    font-size:20px;
+    line-height: 0px;
 }
-button
+/* button
 {
     font-family:"Times New Roman";
-    font-size:30px;
+    font-size:40px; 
+} */
+button {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 16px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  margin: 4px 2px;
+  -webkit-transition-duration: 0.4s; /* Safari */
+  transition-duration: 0.4s;
+  cursor: pointer;
+  border-radius: 12px;
 }
+button {
+  background-color: rgb(98, 100, 100);
+  color: rgb(38, 42, 44);
+  border: 2px solid #9e9d9d;
+  font-size: 25px;
+  font-weight:600;
+}
+.button1 {
+  background-color: rgb(98, 100, 100);
+  color: rgb(38, 42, 44);
+  border: 2px solid #9e9d9d;
+  font-size: 15px;
+  font-weight:600;
+}
+
+button:hover {
+  background-color: #555555;
+  color: white;
+}
+select {
+  background-color: rgb(98, 100, 100);
+  color: rgb(38, 42, 44);
+  border: 2px solid #9e9d9d;
+  border-radius: 12px;
+}
+.range {
+  -webkit-appearance: none;
+  height: 15px;
+  width: 25px;
+  margin-top: -5px; /*使滑块超出轨道部分的偏移量相等*/
+  background: #676969; 
+  border-radius: 12px;
+  /* border-radius: 50%; 外观设置为圆形 */
+  border: solid 0.125em rgba(98, 100, 100, 0.5); /*设置边框*/
+  box-shadow: 0 .125em .125em #3b4547; /*添加底部阴影*/
+
+  /* background: -webkit-linear-gradient(#059CFA, #059CFA) no-repeat;
+  background-size: 0% 100%; */
+  }
+  h1
+  {
+      color:orange;
+      text-align:center;
+      font-size:50px;
+  }
+  h2 {
+    position: absolute;
+    left: 500px;
+    top: 800px;
+  }
+  h3
+  {
+      color:rgb(255, 123, 0);
+      text-align:center;
+      font-size:45px;
+  }
+  h4
+  {
+      font-family:"Times New Roman";
+      font-size:18px;
+      line-height: 0px;
+  }
+  h5
+  {
+      font-family:"Times New Roman";
+      font-size:25px;
+      line-height: 0px;
+      color:orange;
+  }
+  .h7
+  {
+      font-family:"Times New Roman";
+      font-size:100px;
+      line-height: 0px;
+      color:rgb(40, 54, 54);
+  }
+  h6
+  {
+      font-family:"Times New Roman";
+      font-size:50px;
+      line-height: 0px;
+      color:rgb(62, 71, 71);
+  }
+
+
+
+    body {
+      margin: 0;
+    }
+
+    ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      width: 20%;
+      background-color: #3a3a3a;
+      position: fixed;
+      height: 100%;
+      overflow: auto;
+    }
+
+    li a {
+      display: block;
+      color: rgb(232, 233, 233);
+      padding: 70px 16px;
+      text-decoration: none;
+    }
+
+    li a.active {
+      background-color: #282447;
+      color: rgb(5, 5, 5);
+    }
+
+    li a:hover:not(.active) {
+      background-color: #555;
+      color: rgb(12, 12, 12);
+    }
+
+    .icon{
+      position: absolute;
+      right: 0;
+      bottom: 0;
+    }
+
+    .lidar {
+      /* position: absolute;
+      top : 17%;
+      left: 35%; */
+      /* horizontal-align: middle; */
+    }
+
+    .camera {
+      float: middle;
+      position: absolute;
+      margin: 50px;
+      left: 50px;
+      top: 300px;
+    }
+
+    .srv_state {
+
+      float: right;
+      margin-top: 100px;
+    }
+
+    .thumbnail {
+      float: middle;
+      width: 400px;
+      height: 100px;
+      margin: 100px;
+    }
+    
+
+    .text_line {
+      clear: both;
+      margin-bottom: 2px;
+    }
+
+    .title_left {
+      font-family: "Times New Roman";
+      text-align: center;
+      font-size: 50px;
+    }
+    .inline
+    {
+       display:inline;
+    }

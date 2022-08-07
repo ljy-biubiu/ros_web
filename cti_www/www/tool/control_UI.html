@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script type="text/javascript"
+    src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script src="../js/roslibjs/roslib.js"></script>
+  <script src="../js/design/WEB_PARAM.js"></script>
+  <script src="../js/diary/demo.json"></script>
+
+  <link rel="stylesheet" type="text/css" href="../css/style.css">
+
+
+  <script type="text/javascript" type="text/javascript">
+
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+      url: IP_PORT
+    });
+
+    var color = '#99bebe ';
+    var style;
+
+    function createStyle() {
+      style = document.createElement('style');
+      style.type = 'text/css';
+    }
+    function changeBackgroundColor() {
+      if (!style.parentNode) document.head.appendChild(style);
+    }
+    function changeColor() {
+      var color = "yellow|green|blue";
+      color = color.split("|");
+      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
+    }
+    setInterval("changeColor()", 500);
+    createStyle();
+    changeBackgroundColor();
+
+    //判断是否连接成功并输出相应的提示消息到web控制台
+    ros.on('connection', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+      style.innerHTML = 'body {background-color: #bebfc0 ;}';
+    });
+
+    ros.on('error', function (error) {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+    ros.on('close', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+      alert("服务器连接中断，请检查wifi状态，并刷新当前页面");
+    });
+
+
+    ////////////////////////////////////////////////////////////
+
+    // Subscribing to a Topic
+    var listener_report = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/chassis_serial/clean_function_test_report',
+      messageType: 'cti_msgs/DataArray'
+    });
+
+    listener_report.subscribe(function (message) {
+
+      for (var i = 0; i < message.datas.length; i++) {
+        if (message.datas[i].name == "damboard_state_report") {
+          document.getElementById("damboard_state_report").innerHTML = message.datas[i].data;
+        }
+        if (message.datas[i].name == "sidebrush_transform_value") {
+          document.getElementById("sidebrush_transform_value").innerHTML = message.datas[i].data;
+        }
+        if (message.datas[i].name == "side_brush_speed_value") {
+          document.getElementById("side_brush_speed_value").innerHTML = message.datas[i].data;
+        }
+        if (message.datas[i].name == "spray_motor_report") {
+          document.getElementById("spray_motor_report").innerHTML = message.datas[i].data;
+        }
+        if (message.datas[i].name == "fanspeed_value") {
+          document.getElementById("fanspeed_value").innerHTML = message.datas[i].data;
+        }
+      }
+
+    });
+    ////////////////////////////////////////////////////////////
+    var sb_horizontal_data = 99;
+    var sb_velocity_data = 65;
+    var fan_velocity_data = 75;
+
+    var sb_horizontal_cur_data = 0;
+    var sb_velocity_cur_data = 0;
+    var fan_velocity_cur_data = 0;
+
+    // Publishing a Topic
+    var led_control_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/web/ledshow/light',
+      messageType: 'std_msgs/String'
+    });
+
+    var command = new ROSLIB.Message({
+      data: ""
+    });//创建一个message
+    function send_command(message) {
+      command.data = message;
+      led_control_pub.publish(command);//发布消息
+    }
+
+    //////////////////////////////////////
+    var screen_button_flag = 0;
+    var led_head_button_flag = 0;
+    var led_brake_button_flag = 0;
+    var led_left_button_flag = 0;
+    var led_right_button_flag = 0;
+    var led_position_button_flag = 0;
+    var fan_button_flag = 0;
+
+
+    function led_head_request() {
+      if (confirm("确定打开或关闭前灯？")) {
+        led_head_button_flag = get_reverse_bool(led_head_button_flag);
+        set_reverse_word(led_head_button_flag, "led_head_button", "前灯");
+        send_command("headlight");
+        console.log("headlight");
+      }
+    }
+    function led_brake_request() {
+      if (confirm("确定打开或关闭刹车灯？")) {
+        led_brake_button_flag = get_reverse_bool(led_brake_button_flag);
+        set_reverse_word(led_brake_button_flag, "led_brake_button", "刹车灯");
+        send_command("brake");
+        console.log("brake");
+      }
+    }
+    function led_left_request() {
+      if (confirm("确定打开或关闭左转灯？")) {
+        led_left_button_flag = get_reverse_bool(led_left_button_flag);
+        set_reverse_word(led_left_button_flag, "led_left_button", "左转灯");
+        send_command("turn_left");
+        console.log("turn_left");
+      }
+    }
+    function led_right_request() {
+      if (confirm("确定打开或关闭右转灯？")) {
+        led_right_button_flag = get_reverse_bool(led_right_button_flag);
+        set_reverse_word(led_right_button_flag, "led_right_button", "右转灯");
+        send_command("turn_right");
+        console.log("turn_right");
+      }
+    }
+    function led_position_request() {
+      if (confirm("确定打开或关闭示宽灯？")) {
+        led_position_button_flag = get_reverse_bool(led_position_button_flag);
+        set_reverse_word(led_position_button_flag, "led_position_button", "示宽灯");
+        send_command("position");
+        console.log("position");
+      }
+    }
+    function screen_request() {
+      if (confirm("确定打开或关闭屏幕？")) {
+        screen_button_flag = get_reverse_bool(screen_button_flag);
+        set_reverse_word(screen_button_flag, "screen_button", "屏幕");
+        send_command("DISPLAY");
+        console.log("DISPLAY");
+      }
+    }
+
+    function get_reverse_bool(data) {
+      if (data == 0) {
+        return 1;
+      }
+      else {
+        return 0;
+      }
+    }
+
+    function set_reverse_word(data, name, content) {
+      if (data == 0) {
+        document.getElementById(name).innerHTML = content + "（关闭）";
+      }
+      else {
+        document.getElementById(name).innerHTML = content + "（打开）";
+      }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////  SB_first 
+    function sb_hrz_Change() {
+
+      var myselect = document.getElementById("sidebrush_position_horizontal_selection");
+      document.getElementById("show1").value = myselect.value;
+      sb_horizontal_cur_data = myselect.value;
+      //console.log(sb_horizontal_cur_data);
+    }
+
+    function sb_hrz_text_Change() {
+      var myselect = document.getElementById("show1");
+      if (isNaN(myselect.value) || myselect.value < 0 || myselect.value > 100) {
+        alert("请输入0~100范围内的整数");
+        return;
+      }
+      document.getElementById("sidebrush_position_horizontal_selection").value = Math.round(myselect.value);
+      sb_horizontal_cur_data = Math.round(myselect.value);
+    }
+
+    function confirm_horizoncal() {
+      if (confirm("是否确定修改?")) {
+        sb_horizontal_data = sb_horizontal_cur_data;
+        document.getElementById("sb_horizontal_set_value").innerHTML = sb_horizontal_data;
+      }
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////  third
+    function sb_volocity_Change() {
+
+      var myselect = document.getElementById("sidebrush_velocity_selection");
+      document.getElementById("show3").value = myselect.value;
+      sb_velocity_cur_data = myselect.value;
+      //console.log(sb_horizontal_cur_data);
+    }
+
+    function sb_vlt_text_Change() {
+      var myselect = document.getElementById("show3");
+      if (isNaN(myselect.value) || myselect.value < 0 || myselect.value > 100) {
+        alert("请输入0~100范围内的整数");
+        return;
+      }
+      document.getElementById("sidebrush_velocity_selection").value = Math.round(myselect.value);
+      sb_velocity_cur_data = Math.round(myselect.value);
+    }
+
+    function confirm_volocity() {
+      if (confirm("是否确定修改?")) {
+        sb_velocity_data = sb_velocity_cur_data;
+        document.getElementById("sb_velocity_set_value").innerHTML = sb_velocity_data;
+      }
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////13 23 26
+
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////// fan velocity
+    function fan_volocity_Change() {
+
+      var myselect = document.getElementById("fan_velocity_selection");
+      document.getElementById("show2").value = myselect.value;
+      fan_velocity_cur_data = myselect.value;
+      //console.log(sb_horizontal_cur_data);
+    }
+
+    function fan_vel_text_Change() {
+      var myselect = document.getElementById("show2");
+      if (isNaN(myselect.value) || myselect.value < 0 || myselect.value > 100) {
+        alert("请输入0~100范围内的整数");
+        return;
+      }
+      document.getElementById("fan_velocity_selection").value = Math.round(myselect.value);
+      fan_velocity_cur_data = Math.round(myselect.value);
+    }
+
+    function confirm_fan_volocity() {
+      if (confirm("是否确定修改?")) {
+        fan_velocity_data = fan_velocity_cur_data;
+        document.getElementById("fan_velocity_set_value").innerHTML = fan_velocity_data;
+      }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    // Publishing a Topic
+    var io_test_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/chassis_serial/clean_function_test',
+      messageType: 'cti_msgs/DataArray'
+    });
+
+    var io_test_data_array = new ROSLIB.Message({
+      datas: []
+    });//创建一个message
+
+    var io_test_data_hor_sb = new ROSLIB.Message({
+      name: "sidebrush_transform",
+      data: "20",
+      type: 0
+    });//创建一个message
+
+    var io_test_data_vel_sb = new ROSLIB.Message({
+      name: "sidebrush_speed",
+      data: "20",
+      type: 0
+    });//创建一个message
+
+    var io_test_data_fan_ = new ROSLIB.Message({
+      name: "fanspeed",
+      data: "60",
+      type: 0
+    });//创建一个message
+
+    function send_io_test_command(message) {
+      io_test_pub.publish(message);//发布消息
+    }
+
+
+    function sb_start_key() {
+      if (confirm("是否确定执行操作?")) {
+        io_test_data_array.datas = [];
+        io_test_data_hor_sb.data = sb_horizontal_data.toString();
+        io_test_data_array.datas.push(io_test_data_hor_sb);
+        io_test_data_vel_sb.data = sb_velocity_data.toString();
+        io_test_data_array.datas.push(io_test_data_vel_sb);
+        io_test_data_fan_.data = fan_velocity_data.toString();
+        io_test_data_array.datas.push(io_test_data_fan_);
+
+        board_status_Change();
+        start_water();
+        send_io_test_command(io_test_data_array);
+      }
+      console.log(io_test_data_array);
+    }
+
+    var io_test_data_bor_sw = new ROSLIB.Message({
+      name: "dam_board",
+      data: "3",
+      type: 0
+    });//创建一个message
+
+    function board_status_Change() {
+      var myselect = document.getElementById("board_status_select");
+      var index = myselect.selectedIndex;
+      var value = myselect.options[index].value;
+      var value_tra;
+      switch (Number(value)) {
+        case 0:
+          value_tra = "关闭";
+          break;
+        case 1:
+          value_tra = "打开";
+          break;
+        case 2:
+          value_tra = "半开";
+          break;
+        case 3:
+          value_tra = "量子态";
+          break;
+      }
+
+      document.getElementById("bor_set_value").innerHTML = value_tra;
+      io_test_data_bor_sw.data = value.toString();
+      io_test_data_array.datas.push(io_test_data_bor_sw);
+    }
+
+    var io_test_data_water_ = new ROSLIB.Message({
+      name: "spray_motor",
+      data: "1",
+      type: 0
+    });//创建一个message
+    var water_button_flag = 0;
+    function start_water() {
+      io_test_data_array.datas.push(io_test_data_water_);
+    }
+
+    // function start_fan() {
+    //   if (confirm("确定打开或关闭风机？")) {
+    //     fan_button_flag = get_reverse_bool(fan_button_flag);
+    //     set_reverse_word(fan_button_flag, "fan_button", "风机");
+    //     io_test_data_array.datas.push(io_test_data_fan_);
+    //   }
+    // }
+
+  </script>
+
+<body>
+
+  <div style="margin-left:10%;padding:1px 16px;height:1000px;">
+
+    <div class="srv_state">
+      <p id="connect_status">服务器状态（未响应）</p>
+    </div>
+
+    <title>车辆IO控制界面</title>
+    <h1 id="license">车辆IO控制界面</h1>
+    <br /><br />
+    <h6>车灯控制：</h6>
+    <div>
+      <button onclick="screen_request()" style="width:200px;" id="screen_button">&nbsp; 屏幕(关)
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+      <button onclick="led_head_request()" style="width:200px;" id="led_head_button">&nbsp; 大灯(关)
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+      <button onclick="led_brake_request()" style="width:200px;" id="led_brake_button">&nbsp; 刹车灯(关) &nbsp;</button>
+    </div>
+    <div>
+      <button onclick="led_left_request()" style="width:200px;" id="led_left_button">&nbsp; 左转向灯(关) &nbsp;</button>
+      <button onclick="led_right_request()" style="width:200px;" id="led_right_button">&nbsp; 右转向灯(关) &nbsp;</button>
+      <button onclick="led_position_request()" style="width:200px;" id="led_position_button">&nbsp; 示阔灯(关)
+        &nbsp;</button>
+    </div>
+    <div></div>
+
+    <h6>设备一键测试：</h6>
+    <div>
+      <table bgcolor=#D8D8D8 border="1" height="70" width="95%">
+        <tr align="center">
+          <td width="10%" class="btbg font-center titfont" colspan="4">设备测试测试值</td>
+        </tr>
+        <tr align="center">
+          <td width="10%" class="btbg font-center titfont" rowspan="1">边刷伸缩设定值</td>
+          <td width="10%" class="btbg font-center titfont" rowspan="1">边刷速度设定值</td>
+          <td width="10%" class="btbg font-center titfont" rowspan="1">风机转速设定值</td>
+          <td width="10%" class="btbg font-center titfont" rowspan="1">挡板测试设定值</td>
+        </tr>
+        <tr align="center">
+          <td id="sb_horizontal_set_value">99(默认)</td>
+          <td id="sb_velocity_set_value">65(默认)</td>
+          <td id="fan_velocity_set_value">75(默认)</td>
+          <td id="bor_set_value">开合(默认)</td>
+        </tr>
+      </table>
+      <table bgcolor=#D8D8D8 border="1" height="70" width="95%">
+        <tr align="center">
+          <td width="10%" class="btbg font-center titfont" colspan="3">设备测试结果</td>
+        </tr>
+
+        <tr align="center">
+          <td width="10%" class="btbg font-center titfont" rowspan="1">边刷伸缩校准结果(误差在2%为正常)</td>
+          <td width="10%" class="btbg font-center titfont" rowspan="1">边刷升降校准结果</td>
+          <td width="10%" class="btbg font-center titfont" rowspan="1">边刷速度校准结果(误差在5%为正常)</td>
+        </tr>
+        <tr align="center">
+          <td id="sidebrush_transform_value">NULL</td>
+          <td >无</td>
+          <td id="side_brush_speed_value">NULL</td>
+        </tr>
+
+        <tr align="center">
+          <td width="10%" class="btbg font-center titfont" rowspan="1">花洒测试结果</td>
+          <td width="10%" class="btbg font-center titfont" rowspan="1">风机测试结果(误差在5%为正常)</td>
+          <td width="10%" class="btbg font-center titfont" rowspan="1">挡板测试结果</td>
+        </tr>
+        <tr align="center">
+          <td id="spray_motor_report">NULL</td>
+          <td id="fanspeed_value">NULL</td>
+          <td id="damboard_state_report">NULL</td>
+        </tr>
+      </table>
+      <br />
+    </div>
+    <!-- ////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+  
+
+  
+    <div>
+      边刷伸缩位置控制：
+      <input type="range" id="sidebrush_position_horizontal_selection" value="99" style="width:300px" class="range"
+        onchange="sb_hrz_Change()">&nbsp;
+
+      <input type="text" id="show1" value="99" min="0" max="100" style="width:60px;" onchange="sb_hrz_text_Change()">
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <button onclick="confirm_horizoncal()" class="button1">&nbsp; 确认 &nbsp;</button>
+    </div>
+    <br />
+
+
+    <div>
+      边刷速度控制：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <input type="range" id="sidebrush_velocity_selection" value="65" style="width:300px" class="range"
+        onchange="sb_volocity_Change()">&nbsp;
+
+      <input type="text" id="show3" value="65" min="0" max="100" style="width:60px;" onchange="sb_vlt_text_Change()">
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <button onclick="confirm_volocity()" class="button1">&nbsp; 确认 &nbsp;</button>
+    </div>
+    <br />
+
+    <div>
+      风机转速控制：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <input type="range" id="fan_velocity_selection" value="75" style="width:300px" class="range"
+        onchange="fan_volocity_Change()">&nbsp;
+
+      <input type="text" id="show2" value="75" min="0" max="100" style="width:60px;" onchange="fan_vel_text_Change()">
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <button onclick="confirm_fan_volocity()" class="button1">&nbsp; 执行 &nbsp;</button>
+    </div>
+    <br />
+
+
+    挡板状态选择：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <select id="board_status_select" onchange="board_status_Change()" style="height:50px ;width:600px">
+      <option value="1">挡板打开 </option>
+      <option value="0">挡板关闭</option>
+      <option value="2">挡板半开</option>
+      <option selected="selected" value="3">挡板量子态</option>
+    </select>
+
+    <!-- ////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+    <div>
+      <br />
+      一键自检:
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    
+      <button onclick="sb_start_key()" class="button1">&nbsp; 一键执行 &nbsp;</button>
+    </div>
+    <br />
+
+    <div>
+      <!-- <h6>其他开关：</h6>
+      <table bgcolor=#D8D8D8 border="1" height="70" width="95%">
+        <tr align="center">
+          <td width="10%" class="btbg font-center titfont" rowspan="1">挡板测试结果</td>
+          <td width="10%" class="btbg font-center titfont" rowspan="1">花洒测试结果</td>
+          <td width="10%" class="btbg font-center titfont" rowspan="1">风机测试结果</td>
+        </tr>
+        <tr align="center">
+          <td id="damboard_state_result">NULL</td>
+          <td id="spray_motor_report">NULL</td>
+          <td id="fanspeed_value">NULL</td>
+        </tr>
+      </table>
+      <br /><br /><br /><br /> -->
+
+
+      <!-- <div>
+        <button onclick="start_board()" style="width:200px;" id="board_button">&nbsp; 挡板(关)
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+      </div> -->
+      <!-- 边刷水平位置控制： -->
+
+      <!-- 挡板状态选择：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <select id="board_status_select" onchange="board_status_Change()" style="height:50px ;width:600px">
+        <option selected="selected">未选择</option>
+        <option value="1">挡板打开 </option>
+        <option value="0">挡板关闭</option>
+        <option value="2">挡板半开</option>
+        <option value="3">挡板量子态</option>
+      </select> -->
+
+      <br /><br /><br /><br />
+      <!-- <div>
+        <button onclick="start_fan()" style="width:200px;" id="fan_button">&nbsp; 风机(关)
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+        <button onclick="start_water()" style="width:200px;" id="water_button">&nbsp; 花洒(关)
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+      </div>
+      <br /><br /><br /><br /><br /><br /> -->
+    </div>
+  </div>
+  <br /><br />
+  <!-- <div class="icon" >
+  <img src="image/002.png" class="icon" width="400px" height="350px" style="z-index: -1;"/>
+  </div> -->
+
+</body>
+
+</html>
+
+
+
+<!-- 边刷水平位置控制： -->
+<!-- <select id="sidebrush_position_horizontal_selection" onchange="sidebrush_position_horizontal_Change()"
+        style="height:50px ;width:400px">
+        <option selected="selected">未选择</option>
+        <option value="1">0% </option>
+        <option value="2">25%</option>
+        <option value="3">50%</option>
+        <option value="4">75% </option>
+        <option value="4">100% </option>
+      </select> -->
+<!-- <select id="sidebrush_position_verticle_selection" onchange="sidebrush_position_verticle_Change()"
+        style="height:50px ;width:400px">
+        <option value="0" selected="selected">未选择</option>
+        <option value="1">0% </option>
+        <option value="2">25%</option>
+        <option value="3">50%</option>
+        <option value="4">75% </option>
+        <option value="4">100% </option>
+      </select> -->
+<!-- <select id="sidebrush_velocity_selection" onchange="sidebrush_velocity_selection_Change()"
+        style="height:50px ;width:400px">
+        <option selected="selected">未选择</option>
+        <option value="1">0% </option>
+        <option value="2">25%</option>
+        <option value="3">50%</option>
+        <option value="4">75% </option>
+        <option value="4">100% </option>
+      </select> -->
+
+
+
+<!-- ////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+
+
+<!-- <div>
+      边刷垂直位置控制：
+      <input type="range" id="sidebrush_position_verticle_selection" value="20" style="width:300px" class="range"
+        onchange="sb_vtc_Change()">&nbsp;
+
+      <input type="text" id="show2" min="0" value="20" max="100" style="width:60px;" onchange="sb_vtc_text_Change()">
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <button onclick="confirm_verticle()" class="button1">&nbsp; 执行 &nbsp;</button>
+    </div>
+    <br /> -->
+
+<!-- <div>
+      边刷水平位置控制：
+
+      <input type="range" id="sidebrush_position_verticle_selection" value="20" style="width:300px" class="range"
+        onchange="document.getElementById('show2').innerHTML=value">&nbsp;
+      <span id="show2">20</span>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <button onclick="start_press_buildmap()" class="button1">&nbsp; 执行 &nbsp;</button>
+
+    </div> -->
+<!-- <br /> -->
+
+<!-- ////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+
+<!-- <div>
+      边刷速度控制：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+      <input type="range" id="sidebrush_velocity_selection" value="20" style="width:300px" class="range"
+        onchange="document.getElementById('show3').innerHTML=value">&nbsp;
+      <span id="show3">20</span>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <button onclick="start_press_buildmap()" class="button1">&nbsp; 执行 &nbsp;</button>
+    </div> -->

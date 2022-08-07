@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script type="text/javascript"
+    src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script src="../js/roslibjs/roslib.js"></script>
+  <script src="../js/design/WEB_PARAM.js"></script>
+  <script src="../js/diary/demo.json"></script>
+
+  <link rel="stylesheet" type="text/css" href="../css/style.css">
+
+
+
+  <script type="text/javascript" type="text/javascript">
+
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+      url: IP_PORT
+    });
+
+    var color = '#99bebe ';
+    var style;
+
+    function createStyle() {
+      style = document.createElement('style');
+      style.type = 'text/css';
+    }
+    function changeBackgroundColor() {
+      if (!style.parentNode) document.head.appendChild(style);
+    }
+    function changeColor() {
+      var color = "yellow|green|blue";
+      color = color.split("|");
+      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
+    }
+    setInterval("changeColor()", 500);
+    createStyle();
+    changeBackgroundColor();
+
+    //判断是否连接成功并输出相应的提示消息到web控制台
+    ros.on('connection', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+      style.innerHTML = 'body {background-color: #bebfc0 ;}';
+    });
+
+    ros.on('error', function (error) {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+    ros.on('close', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+    // Publishing a Topic
+    var cmd_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/rosweb/cmd',
+      messageType: 'std_msgs/Int32'
+    });
+
+    var command = new ROSLIB.Message({
+      data: 0
+    });//创建一个message
+    function send_command(message) {
+      command.data = message;
+      cmd_pub.publish(command);//发布消息
+    }
+   
+    // Subscribing to a Topic
+    var listener_ = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/web/camera1',
+      messageType: 'std_msgs/String'
+    });
+
+    listener_.subscribe(function (message) {
+
+      var ima = document.getElementById("tus");
+      ima.src = message.data
+    
+    });
+    // Publishing a Topic
+    var cmd_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/rosweb/cmd',
+      messageType: 'std_msgs/Int32'
+    });
+
+    var command = new ROSLIB.Message({
+      data: 0
+    });//创建一个message
+    function send_command(message) {
+      command.data = message;
+      cmd_pub.publish(command);//发布消息
+    }
+
+    function start_press()
+    {
+      send_command(10);
+    }
+
+    window.onbeforeunload = onbeforeunload_handler;
+    window.onunload = onunload_handler;
+    function onbeforeunload_handler(){
+      close_press();
+      var warning="确认退出?";
+      return warning;
+    }
+
+  </script>
+
+
+<body>
+  <div style="margin-left:20%;padding:1px 16px;height:1000px;overflow:hidden;">
+
+    <div class="srv_state">
+      <p id="connect_status">服务器状态（未响应）</p>
+    </div>
+
+    <title>无人速度日志：</title>
+    <h1 id="license">阳光无人车</h1>
+
+    <script language="javascript">
+        LICENSE = '截取相机图片工具：' + LICENSE;
+        document.getElementById("license").innerHTML = LICENSE;
+    </script>
+
+  <button onclick="start_press()"style="width:200px;" >&nbsp; 拍照 &nbsp;</button>
+  <div></div>
+
+  <div align="center">
+    <img  id="tus" src="image/lidar_ma.png" class= "camera"  width="1280px" height="720px" >
+  </div>
+
+</div>
+  <!-- <div class="icon" >
+  <img src="image/002.png" class="icon" width="400px" height="350px" style="z-index: -1;"/>
+  </div> -->
+
+</body>
+
+</html>
+
+

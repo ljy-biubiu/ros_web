@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <!-- <meta http-equiv="refresh" content="0.1"> content 为间隔时间 -->
+  <script type="text/javascript"
+    src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script src="js/roslibjs/roslib.js"></script>
+  <script src="js/design/WEB_PARAM.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+
+  <script type="text/javascript" type="text/javascript">
+
+
+    var aa = window.localStorage.getItem('/home/ljy/dev/catkin_wx/src/cti_data_viewer/cti_www/www/license.js'); //读存储的数据
+    var aaObj = JSON.parse(aa); //将JSON字符串转化成JSON对象方便读取
+    var LICENSE= aaObj.license;
+    var IP_PORT= aaObj.ip_port;
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+      url: IP_PORT
+    });
+
+    var color = '#99bebe ';
+    var style;
+
+    function createStyle() {
+      style = document.createElement('style');
+      style.type = 'text/css';
+    }
+    function changeBackgroundColor() {
+      if (!style.parentNode) document.head.appendChild(style);
+    }
+    function changeColor() {
+      var color = "yellow|green|blue";
+      color = color.split("|");
+      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
+    }
+    setInterval("changeColor()", 500);
+    createStyle();
+    changeBackgroundColor();
+
+    //判断是否连接成功并输出相应的提示消息到web控制台
+    ros.on('connection', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+      style.innerHTML = 'body {background-color: #bebfc0 ;}';
+    });
+
+    ros.on('error', function (error) {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+    ros.on('close', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+
+      // CMD lidar mode
+      var listener_ = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/cti_mapsample/mapToPng_encodebase64_topic',
+      messageType: 'std_msgs/String'
+    });
+
+    listener_.subscribe(function (message) {
+
+      var ima = document.getElementById("tus");
+      ima.src = message.data
+    
+    });
+
+    function turn_to_coordination_model() {
+      window.location.href="lidar_GB.html"
+      }
+
+    //// Subscribe tf state
+    var listener_robotconfig_sensorstate = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/rosweb/pub_web_tf_msg',
+      messageType: 'std_msgs/String'
+    });
+
+    listener_robotconfig_sensorstate.subscribe(function (message) {
+
+      var obj_json = JSON.parse(message.data);
+
+      // document.getElementById("connect_status").innerHTML = obj_json[1].name;
+      for (var i = 0; i < obj_json.length; i++) {
+
+        var s1 = String(i);
+        var s2 = '_name';
+        var s3 = '_state';
+
+        document.getElementById(s1.concat(s2)).innerHTML = obj_json[i].name;
+        document.getElementById(s1.concat(s3)).innerHTML = obj_json[i].statu;
+      }
+    });
+
+
+  </script>
+
+
+<body>
+
+  <ul>
+    <strong>
+      <li><a class="title_left" href="vihicle_GB.html">车辆状态</a></li>
+      <li><a class="title_left" href="#home">导航状态</a></li>
+      <li><a class="title_left" href="diary_GB.html">错误日志</a></li>
+    </strong>
+  </ul>
+
+  <div style="margin-left:20%;padding:1px 16px;height:1000px;">
+
+    <div class="srv_state">
+      <p id="connect_status">服务器状态（未响应）</p>
+    </div>
+  
+    <title>阳光无人车</title>
+    <h1 id="license">阳光无人车</h1>
+
+
+    <script>
+      LICENSE = '阳光无人车-' + LICENSE;
+      document.getElementById("license").innerHTML = LICENSE;
+    </script>
+    
+    <table width="80%" cellspacing="1" cellpadding="9" bgcolor= #D8D8D8 border="1" align="center" height="100">
+      <tr>
+        <td width="5%" class="btbg font-center titfont" rowspan="1">TF</td>
+        <td width="30%" class="btbg font-center titfont" rowspan="1">COORDINATION</td>
+      </tr>
+      <tr>
+      
+      </tr>
+      <tr>
+        <td id="0_name">NULL&nbsp;</td>
+        <td id="0_state">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="1_name">NULL&nbsp;</td>
+        <td id="1_state">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="2_name">NULL&nbsp;</td>
+        <td id="2_state">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="3_name">NULL&nbsp;</td>
+        <td id="3_state">NULL&nbsp;</td>
+      </tr>
+      <!-- <tr>
+        <td id="4_name">NULL&nbsp;</td>
+        <td id="4_state">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="5_name">NULL&nbsp;</td>
+        <td id="5_state">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="6_name">NULL&nbsp;</td>
+        <td id="6_state">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="7_name">NULL&nbsp;</td>
+        <td id="7_state">NULL&nbsp;</td>
+      </tr> -->
+
+    </table>
+
+    <body >
+      <div align="center">
+      <img  id="tus" src="image/lidar_ma.png" class= "lidar"  width="600px" height="750px" > 
+        </div>
+    </body>    
+    <button onclick="turn_to_coordination_model()"class ="thumbnail" >&nbsp; 切换到地图模式 &nbsp;</button>
+  </div>
+
+  <!-- <button onclick="stop()" style="width:800px;">停止</button> -->
+
+  <div class="icon" >
+    <img src="image/002.png" class="icon" width="400px" height="350px" style="z-index: -1;"/>
+    </div>
+</body>
+
+</html>
+
+

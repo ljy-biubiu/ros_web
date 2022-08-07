@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script type="text/javascript"
+    src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script src="../js/roslibjs/roslib.js"></script>
+  <script src="../js/design/WEB_PARAM.js"></script>
+  <script src="../js/diary/demo.json"></script>
+  <!-- <script src="../js/design/pointcloud.js"></script> -->
+
+  <link rel="stylesheet" type="text/css" href="../css/style.css">
+
+
+
+  <script type="text/javascript" type="text/javascript">
+
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+      url: IP_PORT
+    });
+
+    var color = '#99bebe ';
+    var style;
+
+    function createStyle() {
+      style = document.createElement('style');
+      style.type = 'text/css';
+    }
+    function changeBackgroundColor() {
+      if (!style.parentNode) document.head.appendChild(style);
+    }
+    function changeColor() {
+      var color = "yellow|green|blue";
+      color = color.split("|");
+      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
+    }
+    setInterval("changeColor()", 500);
+    createStyle();
+    changeBackgroundColor();
+
+    //判断是否连接成功并输出相应的提示消息到web控制台
+    ros.on('connection', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+      style.innerHTML = 'body {background-color: #bebfc0 ;}';
+    });
+
+    ros.on('error', function (error) {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+    ros.on('close', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+      alert("服务器连接中断，请检查wifi状态，并刷新当前页面");
+    });
+
+    // Publishing a Topic
+    var cmd_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/web/nav/cmd',
+      messageType: 'std_msgs/String'
+    });
+
+    var command = new ROSLIB.Message({
+      data: ""
+    });//创建一个message
+    function send_command(message) {
+      command.data = message;
+      cmd_pub.publish(command);//发布消息
+    }
+
+    ////////////////////////////////////////////////////
+    var saver_sum_diary="";
+    ///////////////////////////////////////////////////////////////////
+    function start_press_buildmap()
+    {
+      var a = prompt("请输入“确认”","确认");
+      if( a == "确认" ) 
+      {
+	      console.log("gdasjdasdgjgdjagdjasgjd");
+        send_command("start");
+        var tObj = document.getElementById('saver_diary');
+        var d = new Date();
+        var hour=d.getHours(); //获取小时   
+        var minutes=d.getMinutes(); //获取分钟   
+        var second=d.getSeconds(); //获取秒 
+        saver_sum_diary =" 时间："+ hour+"-"+minutes+"-"+second+"     信息:  开始测试" +"\n";
+        tObj.value = saver_sum_diary;
+      }
+    }
+
+    function close_press_buildmap()
+    {
+      if(confirm("你确定停止测试吗？"))
+      {
+        send_command("close");
+      }
+    }
+
+    function versionChange()
+    {
+      var myselect=document.getElementById("version_selection");
+      var index=myselect.selectedIndex ;
+      var value=myselect.options[index].value;
+      send_command(value);
+      console.log(value);
+    }
+    
+  </script>
+
+
+<body>
+  <div style="margin-left:20%;padding:1px 16px;height:2000px;overflow:hidden;">
+
+    <div class="srv_state">
+      <p id="connect_status">服务器状态（未响应）</p>
+    </div>
+
+    <title>直行误差测量：</title>
+    <h1 >直行误差测量器：</h1>
+
+    <select id="version_selection" onchange="versionChange()" style="height:60px"> 
+      <option value="0.5"  selected="selected">请选择行驶速度(默认0.5m/s)</option> 
+      <option value ="1">1 m/s</option>
+      <option value ="1.5">1.5 m/s</option>
+      <option value ="2">2 m/s</option>
+    </select>&nbsp;&nbsp;
+
+  <button onclick="start_press_buildmap()"style="width:150px;" >&nbsp; 执行 &nbsp;</button>&nbsp;&nbsp;&nbsp;
+  <button onclick="close_press_buildmap()"style="width:150px;" >&nbsp; 终止 &nbsp;</button>
+  <div></div>
+  <textarea id="saver_diary"rows="30" cols="80" readonly="readonly"></textarea>
+  <br />
+  <iframe src="vel_table1.html" width="640" height="400"></iframe>
+  <br />
+  <iframe src="vel_table2.html" width="640" height="400"></iframe>
+  <br /><br /><br /><br /><br /><br /><br /><br /><br />
+
+  <script language="javascript">
+    // Subscribing to a Topic  velocity
+    var listener_velocity = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/waypoints_follow/strightline_test',
+      messageType: 'std_msgs/String'
+    });
+
+    listener_velocity.subscribe(function (message) {
+
+      var tObj = document.getElementById('saver_diary');
+      var d = new Date();
+      var hour=d.getHours(); //获取小时   
+      var minutes=d.getMinutes(); //获取分钟   
+      var second=d.getSeconds(); //获取秒 
+      console.log(message);
+      if( message.data == "localization_error" )
+      {
+          saver_sum_diary =saver_sum_diary + " 时间："+ hour+"-"+minutes+"-"+second+"     信息:  定位错误" +"\n";
+          tObj.value = saver_sum_diary;
+      }
+      else if( message.data == "perception_error" )
+      {
+          saver_sum_diary =saver_sum_diary + " 时间："+ hour+"-"+minutes+"-"+second+"     信息:  感知错误" +"\n";
+          tObj.value = saver_sum_diary;
+      }
+      else if( message.data == "testing" )
+      {
+          saver_sum_diary =saver_sum_diary + " 时间："+ hour+"-"+minutes+"-"+second+"     信息:  正在测试" +"\n";
+          tObj.value = saver_sum_diary;
+      }
+      else if( message.data == "close" )
+      {
+          saver_sum_diary =saver_sum_diary + " 时间："+ hour+"-"+minutes+"-"+second+"     信息:  结束测试" +"\n";
+          tObj.value = saver_sum_diary;
+      }
+      else
+      {
+          var result = "不合格";
+          if( Number(message.data) < 1 )
+          {
+            result = "合格";
+          }
+          var dialog_data =" 时间："+ hour+"-"+minutes+"-"+second+"     信息: 测试已完成，当前误差为：" + message.data +"      测试结果："+result+"      注：误差在1m以内为合格 ";
+          saver_sum_diary =saver_sum_diary + " 时间："+ hour+"-"+minutes+"-"+second+"     信息: 测试已完成，当前误差为：" + message.data +"      测试结果："+result+"      注：误差在1m以内为合格 "+"\n";
+          tObj.value = saver_sum_diary;
+          alert(dialog_data);
+      }
+    }); 
+  </script>
+
+
+
+</div>
+
+</body>
+
+</html>
+
+

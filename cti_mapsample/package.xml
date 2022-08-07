@@ -12,8 +12,19 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>cti_msgs</build_depend>
+  <build_depend>cti_vector_map_msgs</build_depend>
+  <build_depend>cti_rblite_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>ctilog</build_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>cti_msgs</run_depend>
+  <run_depend>cti_vector_map_msgs</run_depend>
+  <run_depend>cti_rblite_msgs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>ctilog</run_depend>
 
 </package>
+

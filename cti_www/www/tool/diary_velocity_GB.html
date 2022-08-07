@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script type="text/javascript"
+    src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script src="../js/roslibjs/roslib.js"></script>
+  <script src="../js/design/WEB_PARAM.js"></script>
+  <script src="../js/diary/demo.json"></script>
+
+  <link rel="stylesheet" type="text/css" href="../css/style.css">
+
+
+
+  <script type="text/javascript" type="text/javascript">
+
+    var aa = window.localStorage.getItem('/home/ljy/dev/catkin_wx/src/cti_data_viewer/cti_www/www/license.js'); //读存储的数据
+    var aaObj = JSON.parse(aa); //将JSON字符串转化成JSON对象方便读取
+    var LICENSE= aaObj.license;
+    var IP_PORT= aaObj.ip_port;
+    
+
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+      url: IP_PORT
+    });
+
+    var color = '#99bebe ';
+    var style;
+
+    function createStyle() {
+      style = document.createElement('style');
+      style.type = 'text/css';
+    }
+    function changeBackgroundColor() {
+      if (!style.parentNode) document.head.appendChild(style);
+    }
+    function changeColor() {
+      var color = "yellow|green|blue";
+      color = color.split("|");
+      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
+    }
+    setInterval("changeColor()", 500);
+    createStyle();
+    changeBackgroundColor();
+
+    //判断是否连接成功并输出相应的提示消息到web控制台
+    ros.on('connection', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+      style.innerHTML = 'body {background-color: #bebfc0 ;}';
+    });
+
+    ros.on('error', function (error) {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+    ros.on('close', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+    // Publishing a Topic
+    var cmd_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/rosweb/cmd',
+      messageType: 'std_msgs/Int32'
+    });
+
+    var command = new ROSLIB.Message({
+      data: 0
+    });//创建一个message
+    function send_command(message) {
+      command.data = message;
+      cmd_pub.publish(command);//发布消息
+    }
+
+    ////////////////////////////////////////////////////
+    var saver_sum_diary="";
+    var count = 0;
+    var flag_record = 0;
+    ///////////////////////////////////////////////////////////////////
+    function start_press_buildmap()
+    {
+      if(flag_record == 1)
+      {
+        flag_record = 0;
+      }
+      else if(flag_record == 0)
+      {
+        flag_record = 1;
+      }
+    }
+    window.addEventListener('touchmove',function(e){
+    let target = e.target
+    if(target && target.tagName === 'TEXTAREA'){ 
+      e.stopPropagation();
+     }
+    },true)
+    
+    window.onbeforeunload = onbeforeunload_handler;
+    window.onunload = onunload_handler;
+    function onbeforeunload_handler(){
+      close_press();
+      var warning="确认退出?";
+      return warning;
+    }
+  </script>
+
+
+<body>
+  <div style="margin-left:20%;padding:1px 16px;height:1000px;overflow:hidden;">
+
+    <div class="srv_state">
+      <p id="connect_status">服务器状态（未响应）</p>
+    </div>
+
+    <title>无人速度日志：</title>
+    <h1 id="license">阳光无人车</h1>
+
+    <script language="javascript">
+        LICENSE = '无人车速度日志：' + LICENSE;
+        document.getElementById("license").innerHTML = LICENSE;
+    </script>
+  <button onclick="start_press_buildmap()"style="width:200px;" >&nbsp; 开始记录 &nbsp;</button>
+  <div></div>
+  <textarea id="saver_diary"rows="60" cols="80" readonly="readonly"></textarea>
+
+
+
+
+  <script language="javascript">
+    // Subscribing to a Topic  velocity
+    var listener_velocity = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/fpga_serial/ctlrun_info',
+      messageType: 'cti_msgs/VehicleCtlRunInfo'
+    });
+
+    listener_velocity.subscribe(function (message) {
+
+      if(flag_record == 1)
+      {
+        if(count > 2)
+        {
+          var tObj = document.getElementById('saver_diary');
+          var d = new Date();
+          var hour=d.getHours(); //获取小时   
+          var minutes=d.getMinutes(); //获取分钟   
+          var second=d.getSeconds(); //获取秒 
+          saver_sum_diary =saver_sum_diary+"     时间："+ hour+"-"+minutes+"-"+second+"      速度:" + message.vel_liner_x+"\n";
+          tObj.value = saver_sum_diary;
+          count = 0;
+        }
+        else
+        {
+          count++;
+        }
+    }
+    }); 
+  </script>
+
+
+
+</div>
+  <!-- <div class="icon" >
+  <img src="image/002.png" class="icon" width="400px" height="350px" style="z-index: -1;"/>
+  </div> -->
+
+</body>
+
+</html>
+
+

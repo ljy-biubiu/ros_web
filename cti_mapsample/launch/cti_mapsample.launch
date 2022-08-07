@@ -1,17 +1,43 @@
 <launch>
-    <arg name="gpsTopic" value="/cti/sensing/gnss/pos_cti" />
-    <arg name="pcTopic" value="/lio_sam/mapping/map_local" />
+    <!-- <arg name="gpsTopic" value="/cti/sensing/gnss/pos_cti" /> -->
+    <arg name="gpsTopic" value="/cti/chassis_serial/gnss" />
+    <arg name="pcTopic" value="/lslam/mapping/map_local" />
+    <arg name="lidarTopic" value="/cti/semantics/object_map/test_costmap" />
+    <arg name="mapToPng_encodebase64_topic" value="/cti/cti_mapsample/mapToPng_encodebase64_topic" />
+    <arg name="rosweb_cmd_lidar" value="/cti/rosweb/cmd_lidar" />
+    <arg name="web_tf_pub_topic" value="/cti/rosweb/pub_web_tf" />
+    <arg name="pub_web_tf_msg_topic" value="/cti/rosweb/pub_web_tf_msg" />
+    <arg name="ndt_pose_topic" value="/ndt_pose" />
+    
+    <!-- name: '/cti/rosweb/cmd_lidar',
+    messageType: 'std_msgs/Int32' -->
 
     <arg name="startMappingCmd" value="$(find lslam)/script/startMapping" />
     <arg name="stopMappingCmd" value="$(find lslam)/script/stopMapping" />
+    <arg name="lidar_png_out_path" value="$(find ctiwww)/www/image/" />
+    <arg name="shutdown_nowCmd_path" value="/home/neousys/cti-launch/boot_sh/" />
+    <arg name="extract_Pointdata_Cmd_path" value="/home/neousys/cti-launch/boot_sh/" />
+
 
     <node pkg="cti_mapsample" type="cti_mapsample" name="cti_mapsample_node" output="screen">
         <param name="gpsTopic" value="$(arg gpsTopic)" />
         <param name="pcTopic" value="$(arg pcTopic)" />
+        <param name="lidarTopic" value="$(arg lidarTopic)" />
 
         <param name="startMappingCmd" value="$(arg startMappingCmd)" />
         <param name="stopMappingCmd" value="$(arg stopMappingCmd)" />
+        <param name="lidar_png_out_path" value="$(arg lidar_png_out_path)" />
+        <param name="shutdown_nowCmd_path" value="$(arg shutdown_nowCmd_path)" />
+        <param name="extract_Pointdata_Cmd_path" value="$(arg extract_Pointdata_Cmd_path)" />
+        <param name="rosweb_cmd_lidar" value="$(arg rosweb_cmd_lidar)" />
+        <param name="web_tf_pub_topic" value="$(arg web_tf_pub_topic)" />
+        <param name="pub_web_tf_msg_topic" value="$(arg pub_web_tf_msg_topic)" />
+        <param name="ndt_pose_topic" value="$(arg ndt_pose_topic)" />
+        
     </node>
+    <include file="$(find cti_mapsample)/launch/tf.launch"></include>
+    <!-- <node pkg="tf" type="static_transform_publisher" name="tf_broadcaster_vihicle_seconcd_person_view" args="0 0 30 0 0 0 1 /base_link /base_vihicle_seconcd_person_view 50" /> -->
+
     <node pkg="cti_mapsample" type="state_monitor.py" name="state_monitor_node" output="screen">
         <rosparam file="$(find cti_mapsample)/config/config.yaml" command="load" />
     </node>        

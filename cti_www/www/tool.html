@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script type="text/javascript"
+    src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script src="js/roslibjs/roslib.js"></script>
+  <script src="js/design/WEB_PARAM.js"></script>
+  <script src="js/require.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+
+
+  <script type="text/javascript" type="text/javascript">
+
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+      url: IP_PORT
+    });
+    console.log(LICENSE);
+    console.log(IP_PORT);
+    var color = '#99bebe ';
+    var style;
+
+    function createStyle() {
+      style = document.createElement('style');
+      style.type = 'text/css';
+    }
+    function changeBackgroundColor() {
+      if (!style.parentNode) document.head.appendChild(style);
+    }
+    function changeColor() {
+      var color = "yellow|green|blue";
+      color = color.split("|");
+      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
+    }
+    setInterval("changeColor()", 500);
+    createStyle();
+    changeBackgroundColor();
+
+    //判断是否连接成功并输出相应的提示消息到web控制台
+    ros.on('connection', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+      style.innerHTML = 'body {background-color: #bebfc0 ;}';
+    });
+
+    ros.on('error', function (error) {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+    ros.on('close', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+      alert("服务器连接中断，请检查wifi状态，并刷新当前页面");
+    });
+
+    function comfirm_press_velocity() {
+      window.location.href = "tool/diary_velocity.html"
+    }
+
+    function comfirm_cut_picture() {
+      window.location.href = "tool/cut_picture_tool.html"
+    }
+
+    function comfirm_document() {
+      window.location.href = "document.html"
+    }
+
+    function comfirm_calibrate() {
+      window.location.href = "tool/calibrate_camera.html"
+    }
+
+    function comfirm_modify_points() {
+      window.location.href = "tool/modifyLineTool.html"
+    }
+
+    function comfirm_calibrate() {
+      window.location.href = "tool/calibrate_camera.html"
+    }
+    function comfirm_lidar_calibrate() {
+      window.location.href = "tool/calibrate_lidar.html"
+    }
+    function comfirm_move_error_points() {
+      window.location.href = "tool/measureMove_error.html"
+    }
+    function comfirm_build_map() {
+      window.location.href = "tool/index.html"
+    }
+    function comfirm_control_UI() {
+      window.location.href = "tool/control_UI.html"
+    }
+    function fix_parameters() {
+      window.location.href = "tool/fix_parameters.html"
+    }
+
+  </script>
+
+<body>
+
+  <ul>
+    <strong>
+      <li><a class="title_left" href="vihicle.html">车辆状态</a></li>
+      <li><a class="title_left" href="lidar.html">导航状态</a></li>
+      <li><a class="title_left" href="equitment.html">底盘状态</a></li>
+      <li><a class="title_left" href="diary.html">错误日志</a></li>
+      <li><a class="title_left" href="#about">其他工具</a></li>
+    </strong>
+  </ul>
+
+  <div style="margin-left:20%;padding:1px 16px;height:1000px;">
+
+    <div class="srv_state">
+      <p id="connect_status">服务器状态（未响应）</p>
+      <p id="run_state">当前状态</p>
+      <p id="sensor_state">传感器状态</p>
+    </div>
+
+    <title>阳光无人车</title>
+    <h1 id="license">阳光无人车</h1>
+
+
+    <script language="javascript">
+      LICENSE = '阳光无人车' + LICENSE;
+      document.getElementById("license").innerHTML = LICENSE;
+    </script>
+
+
+    <br /><br /><br /><br /><br /><br />
+    <div>
+      <button onclick="comfirm_press_velocity()" style="width:300px;">&nbsp; 速度记录工具 &nbsp;</button>&nbsp;&nbsp;
+      <button onclick="comfirm_cut_picture()" style="width:300px;">&nbsp; 截取前摄像头图片 &nbsp;</button>&nbsp;&nbsp;
+    </div>
+    <br /><br /><br /><br />
+    <div>
+      <button onclick="comfirm_document()" style="width:300px;">&nbsp; 错误文档 &nbsp;</button>&nbsp;&nbsp;
+      <button onclick="comfirm_calibrate()" style="width:300px;">&nbsp; 校准摄像头 &nbsp;</button>&nbsp;&nbsp;
+    </div>
+    <br /><br /><br /><br />
+    <div>
+      <button onclick="comfirm_modify_points()" style="width:300px;">&nbsp; 修点工具 &nbsp;</button>&nbsp;&nbsp;
+      <button onclick="comfirm_lidar_calibrate()" style="width:300px;">&nbsp; 雷达校准工具 &nbsp;</button>&nbsp;&nbsp;
+    </div>
+    <br /><br /><br /><br />
+    <div>
+      <button onclick="comfirm_move_error_points()" style="width:300px;">&nbsp; 直行误差测量器 &nbsp;</button>&nbsp;&nbsp;
+      <button onclick="comfirm_build_map()" style="width:300px;">&nbsp; 建图&部署工具 &nbsp;</button>&nbsp;&nbsp;
+    </div>
+    <br /><br /><br /><br />
+    <div>
+      <button onclick="comfirm_control_UI()" style="width:300px;">&nbsp; IO控制页面 &nbsp;</button>&nbsp;&nbsp;
+      <button onclick="fix_parameters()" style="width:300px;">&nbsp; 工控机配置修复 &nbsp;</button>&nbsp;&nbsp;
+    </div>
+
+    <div class="icon">
+      <img src="image/002.png" class="icon" width="400px" height="350px" style="z-index: -1;" />
+    </div>
+    <br /><br /><br /><br /><br /><br />
+</body>
+
+</html>

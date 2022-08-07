@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>第一个 ECharts 实例</title>
+	<script src="https://cdn.staticfile.org/jquery/2.2.4/jquery.min.js"></script>
+	<!-- 引入 echarts.js -->
+	<script src="https://cdn.staticfile.org/echarts/4.3.0/echarts.min.js"></script>
+
+	<script type="text/javascript"
+		src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+	<script src="../js/roslibjs/roslib.js"></script>
+	<script src="../js/design/WEB_PARAM.js"></script>
+	<script src="../js/require.js"></script>
+
+	<!-- <link rel="stylesheet" type="text/css" href="css/style.css"> -->
+</head>
+
+<body>
+	<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+	<div id="main1" style="width: 650px;height:370px;"></div>
+	<script type="text/javascript">
+
+		// Connecting to ROS
+		var ros = new ROSLIB.Ros({
+			url: IP_PORT
+		});
+
+		// Subscribing to a Topic  velocity
+		var listener_velocity = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/fpga_serial/ctlrun_info',
+			messageType: 'cti_msgs/VehicleCtlRunInfo'
+		});
+
+		var vel_cur =0;
+		listener_velocity.subscribe(function (message) {
+			vel_cur = message.vel_liner_x.toFixed(3);
+		});
+
+
+		let date = [];
+		var vel_array = [];
+
+		function addData(shift) {
+
+			
+			var now = new Date();
+			date.push(now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds());
+
+			vel_array.push(vel_cur);
+
+
+			if (shift) {
+				date.shift();
+				vel_array.shift();
+			}
+			// now = new Date(+new Date(now) + 1000);
+		}
+
+		for (var i = 1; i < 100; i++) {
+			addData();
+		}
+
+		option = {
+			title: {
+				text: '车辆速度折线图'
+			},
+			tooltip: {},
+			legend: {
+				data: ['车速']
+			},
+			xAxis: {
+				type: 'category',
+				boundaryGap: false,
+				name: 'T'
+			},
+			yAxis: {
+				boundaryGap: [0, '30%'],
+				type: 'value',
+				name: 'N'
+			},
+			series: [
+				{
+					name: '车速',
+					type: 'line',
+					//smooth: true,
+					//stack: 'a',
+		            areaStyle: {
+		                normal: {}
+		            },
+					data: vel_array,
+					color: 'red'
+				}
+
+			]
+		};
+
+
+
+
+
+		setInterval(function () {
+			addData(true);
+			myChart.setOption({
+				xAxis: {
+					data: date
+				},
+
+				series: [{
+					name: '车速',
+					data: vel_array
+				}
+				]
+			});
+		}, 100);
+
+		// 基于准备好的dom，初始化echarts实例
+		var myChart = echarts.init(document.getElementById('main1'), 'dark');
+		myChart.setOption(option)
+	</script>
+</body>

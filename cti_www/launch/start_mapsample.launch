@@ -1,5 +1,5 @@
 <launch>
-  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
+  <include file="$(find ctiwww)/launch/rosbridge_websocket_webtool.launch" >
       <arg name="port" value="9095" />
   </include>
   <include file="$(find ctiwww)/launch/ctiwww.launch" />
