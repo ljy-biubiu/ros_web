@@ -12,7 +12,6 @@
 		src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
 	<script src="../js/roslibjs/roslib.js"></script>
 	<script src="../js/design/WEB_PARAM.js"></script>
-	<script src="../js/require.js"></script>
 
 	<!-- <link rel="stylesheet" type="text/css" href="css/style.css"> -->
 </head>
@@ -34,7 +33,7 @@
 			messageType: 'cti_msgs/VehicleCtlRunInfo'
 		});
 
-		var vel_cur =0;
+		var vel_cur = 0;
 		listener_velocity.subscribe(function (message) {
 			vel_cur = message.vel_liner_x.toFixed(3);
 		});
@@ -45,7 +44,7 @@
 
 		function addData(shift) {
 
-			
+
 			var now = new Date();
 			date.push(now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds());
 
@@ -87,9 +86,9 @@
 					type: 'line',
 					//smooth: true,
 					//stack: 'a',
-		            areaStyle: {
-		                normal: {}
-		            },
+					areaStyle: {
+						normal: {}
+					},
 					data: vel_array,
 					color: 'red'
 				}

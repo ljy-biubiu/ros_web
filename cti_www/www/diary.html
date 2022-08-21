@@ -14,96 +14,116 @@
 
 
   <style>
-.bigdiv{overflow:hidden;width:100%;height:100%;}
-table {
-    /* background-color: #FFF; */
-    border: none;
-    color: #565;
-    font: 18px arial;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    width:110%;
-}
- 
-table caption {
-    color:rgb(255, 123, 0);
-    font-size: 48px;
-    border-bottom: 2px solid #B3DE94;
-    border-top: 2px solid #B3DE94;
-    width:79%;
-}
- 
-table, td, th {
-    margin: 0;
-    padding: 0;
-    vertical-align: middle;
-    text-align:left;
-}
-tbody{
-    display:block;
-    height:1000px;
-    overflow-y:scroll;
- 
-}
-tbody tr {
-    display:table;
-    width:80%;
-    table-layout:fixed;
-     
-}
-table thead {
-    display:table;
-    width:79.15%;
-    table-layout:fixed;
-}
- 
-table thead th{ color:#FFFFFF;}
- 
-tbody td, tbody th {
-    background-color: #DFC;
-    border-bottom: 2px solid #B3DE94;
-    border-top: 3px solid #FFFFFF;
-    padding: 9px;
-}
- 
- 
-tfoot td, tfoot th {
-    font-weight: bold;
-    padding: 4px 8px 6px 9px;
-    text-align:center;
-}
- 
-thead th {
-    font-size: 14px;
-    font-weight: bold;
-    line-height: 24px;
-    padding: 0 8px 2px;
-    text-align:center;
-     
-}
- 
-tbody tr.odd th,tbody tr.odd td { /*odd就是偶数行*/
-    background-color: #CEA;
-    border-bottom: 2px solid #67BD2A;
-    text-align:center;
-}
- 
-td+td+td, /*第三个td以及之后的td元素*/
-col.price{ /*类样式*/
-    text-align:center;
-}
- 
-tbody tr:hover td, tbody tr:hover th { /*tr也有hover样式*/
-    background-color: #8b7;
-    color:#fff;
-}
+    .bigdiv {
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+    }
+
+    table {
+      /* background-color: #FFF; */
+      border: none;
+      color: #565;
+      font: 18px arial;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      width: 110%;
+    }
+
+    table caption {
+      color: rgb(255, 123, 0);
+      font-size: 48px;
+      border-bottom: 2px solid #B3DE94;
+      border-top: 2px solid #B3DE94;
+      width: 79%;
+    }
+
+    table,
+    td,
+    th {
+      margin: 0;
+      padding: 0;
+      vertical-align: middle;
+      text-align: left;
+    }
+
+    tbody {
+      display: block;
+      height: 1000px;
+      overflow-y: scroll;
+
+    }
+
+    tbody tr {
+      display: table;
+      width: 80%;
+      table-layout: fixed;
+
+    }
+
+    table thead {
+      display: table;
+      width: 79.15%;
+      table-layout: fixed;
+    }
+
+    table thead th {
+      color: #FFFFFF;
+    }
+
+    tbody td,
+    tbody th {
+      background-color: #DFC;
+      border-bottom: 2px solid #B3DE94;
+      border-top: 3px solid #FFFFFF;
+      padding: 9px;
+    }
+
+
+    tfoot td,
+    tfoot th {
+      font-weight: bold;
+      padding: 4px 8px 6px 9px;
+      text-align: center;
+    }
+
+    thead th {
+      font-size: 14px;
+      font-weight: bold;
+      line-height: 24px;
+      padding: 0 8px 2px;
+      text-align: center;
+
+    }
+
+    tbody tr.odd th,
+    tbody tr.odd td {
+      /*odd就是偶数行*/
+      background-color: #CEA;
+      border-bottom: 2px solid #67BD2A;
+      text-align: center;
+    }
+
+    td+td+td,
+    /*第三个td以及之后的td元素*/
+    col.price {
+      /*类样式*/
+      text-align: center;
+    }
+
+    tbody tr:hover td,
+    tbody tr:hover th {
+      /*tr也有hover样式*/
+      background-color: #8b7;
+      color: #fff;
+    }
   </style>
 
 
 
   <script type="text/javascript" type="text/javascript">
 
-    
+
     // Connecting to ROS
     var ros = new ROSLIB.Ros({
       url: IP_PORT
@@ -128,6 +148,12 @@ tbody tr:hover td, tbody tr:hover th { /*tr也有hover样式*/
     createStyle();
     changeBackgroundColor();
 
+    function changeColor() {
+      var color = "yellow|green|blue";
+      color = color.split("|");
+      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
+    }
+
     //判断是否连接成功并输出相应的提示消息到web控制台
     ros.on('connection', function () {
       document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
@@ -144,7 +170,6 @@ tbody tr:hover td, tbody tr:hover th { /*tr也有hover样式*/
       style.innerHTML = 'body {background-color: #4f5257  ;}';
       alert("服务器连接中断，请检查wifi状态，并刷新当前页面");
     });
-
 
     // Publishing a Topic
     var cmd_pub = new ROSLIB.Topic({
@@ -181,26 +206,25 @@ tbody tr:hover td, tbody tr:hover th { /*tr也有hover样式*/
       var json = JSON.parse(message.data);
 
       create_data = new Array();
-      for( var i =0 ; i < json.length ; i++ )
-      {
+      for (var i = 0; i < json.length; i++) {
         var data = "null";
         create_data.push(data);
       }
       // document.getElementById("connect_status").innerHTML = obj_json[1].name;
-      for (var i = 0; i < json.length; i++) 
-      {
+      for (var i = 0; i < json.length; i++) {
         var s1 = String(i);
         var s2 = 'time_';
         var s3 = 'msg_';
         var s4 = 'errorCode_';
-        document.getElementById(s2.concat(s1)).innerHTML = json[json.length-i-1].time;
-        document.getElementById(s3.concat(s1)).innerHTML = json[json.length-i-1].message;
-        document.getElementById(s4.concat(s1)).innerHTML = json[json.length-i-1].error_code;
+        document.getElementById(s2.concat(s1)).innerHTML = json[json.length - i - 1].time;
+        document.getElementById(s3.concat(s1)).innerHTML = json[json.length - i - 1].message;
+        document.getElementById(s4.concat(s1)).innerHTML = json[json.length - i - 1].error_code;
         create_data[i] = "document.html#错误码查阅";
         //console.log(message);   
       }
     }
     )
+
 
   </script>
 
@@ -212,11 +236,11 @@ tbody tr:hover td, tbody tr:hover th { /*tr也有hover样式*/
       <li><a class="title_left" href="lidar.html">导航状态</a></li>
       <li><a class="title_left" href="equitment.html">底盘状态</a></li>
       <li><a class="title_left" href="#about">错误日志</a></li>
-      <li><a class="title_left" href="tool.html">其他工具</a></li>
+      <li><a class="title_left" href="tool .html">其他工具</a></li>
     </strong>
   </ul>
 
-  <div style="margin-left:21%;padding:1px;height:1500px;overflow:hidden;">
+  <div style="margin-left:21%;padding:1px 16px;height:1500px;overflow:hidden;">
 
     <div class="srv_state">
       <p id="connect_status">服务器状态（未响应）</p>
@@ -226,275 +250,278 @@ tbody tr:hover td, tbody tr:hover th { /*tr也有hover样式*/
     <h1 id="license">阳光无人车</h1>
 
     <script language="javascript">
-        LICENSE = '阳光无人车' + LICENSE;
-        document.getElementById("license").innerHTML = LICENSE;
+      LICENSE = '阳光无人车-' + LICENSE;
+      document.getElementById("license").innerHTML = LICENSE;
     </script>
     <table summary="车辆报错日志">
-        <caption>车辆报错日志</caption> 
-        <col></col><col class="price" align="right"></col>
-        <thead>
-            <tr>
-                <th bgcolor="#009999" width="10%">时间</th>
-                <th bgcolor="#00CC99" width="30%">信息</th>
-                <th bgcolor="#00CC99" width="10%">错误码</th>
-            </tr>
-        </thead>   
-        <tbody >
-            <tr class="odd">
-              <td id = "time_0" width="10%">无</td>
-              <td id = "msg_0"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[0];" id = "errorCode_0" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_1" width="10%">无</td>
-              <td id = "msg_1"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[1];" id = "errorCode_1" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_2" width="10%">无</td>
-              <td id = "msg_2"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[2];" id = "errorCode_2" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_3" width="10%">无</td>
-              <td id = "msg_3"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[3];" id = "errorCode_3" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_4" width="10%">无</td>
-              <td id = "msg_4"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[4];" id = "errorCode_4" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_5" width="10%">无</td>
-              <td id = "msg_5"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[5];" id = "errorCode_5" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_6" width="10%">无</td>
-              <td id = "msg_6"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[6];" id = "errorCode_6" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_7" width="10%">无</td>
-              <td id = "msg_7"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[7];" id = "errorCode_7" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_8" width="10%">无</td>
-              <td id = "msg_8"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[8];" id = "errorCode_8" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_9" width="10%">无</td>
-              <td id = "msg_9"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[9];" id = "errorCode_9" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_10" width="10%">无</td>
-              <td id = "msg_10"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[10];" id = "errorCode_10" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_11" width="10%">无</td>
-              <td id = "msg_11"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[11];" id = "errorCode_11" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_12" width="10%">无</td>
-              <td id = "msg_12"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[12];" id = "errorCode_12" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_13" width="10%">无</td>
-              <td id = "msg_13"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[13];" id = "errorCode_13" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_14" width="10%">无</td>
-              <td id = "msg_14"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[14];" id = "errorCode_14" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_15" width="10%">无</td>
-              <td id = "msg_15"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[15];" id = "errorCode_15" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_16" width="10%">无</td>
-              <td id = "msg_16"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[16];" id = "errorCode_16" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_17" width="10%">无</td>
-              <td id = "msg_17"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[17];" id = "errorCode_17" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_18" width="10%">无</td>
-              <td id = "msg_18"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[18];" id = "errorCode_18" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_19" width="10%">无</td>
-              <td id = "msg_19"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[19];" id = "errorCode_19" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_20" width="10%">无</td>
-              <td id = "msg_20"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[20];" id = "errorCode_20" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_21" width="10%">无</td>
-              <td id = "msg_21"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[21];" id = "errorCode_21" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_22" width="10%">无</td>
-              <td id = "msg_22"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[22];" id = "errorCode_22" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_23" width="10%">无</td>
-              <td id = "msg_23"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[23];" id = "errorCode_23" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_24" width="10%">无</td>
-              <td id = "msg_24"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[24];" id = "errorCode_24" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_25" width="10%">无</td>
-              <td id = "msg_25"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[25];" id = "errorCode_25" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_26" width="10%">无</td>
-              <td id = "msg_26"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[26];" id = "errorCode_26" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_27" width="10%">无</td>
-              <td id = "msg_27"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[27];" id = "errorCode_27" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_28" width="10%">无</td>
-              <td id = "msg_28"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[28];" id = "errorCode_28" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_29" width="10%">无</td>
-              <td id = "msg_29"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[29];" id = "errorCode_29" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_30" width="10%">无</td>
-              <td id = "msg_30"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[30];" id = "errorCode_30" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_31" width="10%">无</td>
-              <td id = "msg_31"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[31];" id = "errorCode_31" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_32" width="10%">无</td>
-              <td id = "msg_32"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[32];" id = "errorCode_32" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_33" width="10%">无</td>
-              <td id = "msg_33"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[33];" id = "errorCode_33" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_34" width="10%">无</td>
-              <td id = "msg_34"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[34];" id = "errorCode_34" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_35" width="10%">无</td>
-              <td id = "msg_35"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[35];" id = "errorCode_35" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_36" width="10%">无</td>
-              <td id = "msg_36"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[36];" id = "errorCode_36" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_37" width="10%">无</td>
-              <td id = "msg_37"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[37];" id = "errorCode_37" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_38" width="10%">无</td>
-              <td id = "msg_38"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[38];" id = "errorCode_38" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_39" width="10%">无</td>
-              <td id = "msg_39"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[39];" id = "errorCode_39" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_40" width="10%">无</td>
-              <td id = "msg_40"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[40];" id = "errorCode_40" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_41" width="10%">无</td>
-              <td id = "msg_41"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[41];" id = "errorCode_41" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_42" width="10%">无</td>
-              <td id = "msg_42"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[42];" id = "errorCode_42" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_43" width="10%">无</td>
-              <td id = "msg_43"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[43];" id = "errorCode_43" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_44" width="10%">无</td>
-              <td id = "msg_44"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[44];" id = "errorCode_44" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_45" width="10%">无</td>
-              <td id = "msg_45"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[45];" id = "errorCode_45" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_46" width="10%">无</td>
-              <td id = "msg_46"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[46];" id = "errorCode_46" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_47" width="10%">无</td>
-              <td id = "msg_47"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[47];" id = "errorCode_47" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_48" width="10%">无</td>
-              <td id = "msg_48"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[48];" id = "errorCode_48" >无</a></td>
-            </tr>
-            <tr class="odd">
-              <td id = "time_49" width="10%">无</td>
-              <td id = "msg_49"  width="30%">无</td>
-              <td width="10%"><a href="#" onclick="location.href=create_data[49];" id = "errorCode_49" >无</a></td>
-            </tr>
-            </tbody>
-        
-</table>
-  
-</div>
+      <caption>车辆报错日志</caption>
+      <col>
+      </col>
+      <col class="price" align="right">
+      </col>
+      <thead>
+        <tr>
+          <th bgcolor="#009999" width="10%">时间</th>
+          <th bgcolor="#00CC99" width="30%">信息</th>
+          <th bgcolor="#00CC99" width="5%">错误码</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="odd">
+          <td id="time_0" width="10%">无</td>
+          <td id="msg_0" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[0];" id="errorCode_0">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_1" width="10%">无</td>
+          <td id="msg_1" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[1];" id="errorCode_1">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_2" width="10%">无</td>
+          <td id="msg_2" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[2];" id="errorCode_2">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_3" width="10%">无</td>
+          <td id="msg_3" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[3];" id="errorCode_3">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_4" width="10%">无</td>
+          <td id="msg_4" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[4];" id="errorCode_4">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_5" width="10%">无</td>
+          <td id="msg_5" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[5];" id="errorCode_5">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_6" width="10%">无</td>
+          <td id="msg_6" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[6];" id="errorCode_6">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_7" width="10%">无</td>
+          <td id="msg_7" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[7];" id="errorCode_7">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_8" width="10%">无</td>
+          <td id="msg_8" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[8];" id="errorCode_8">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_9" width="10%">无</td>
+          <td id="msg_9" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[9];" id="errorCode_9">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_10" width="10%">无</td>
+          <td id="msg_10" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[10];" id="errorCode_10">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_11" width="10%">无</td>
+          <td id="msg_11" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[11];" id="errorCode_11">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_12" width="10%">无</td>
+          <td id="msg_12" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[12];" id="errorCode_12">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_13" width="10%">无</td>
+          <td id="msg_13" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[13];" id="errorCode_13">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_14" width="10%">无</td>
+          <td id="msg_14" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[14];" id="errorCode_14">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_15" width="10%">无</td>
+          <td id="msg_15" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[15];" id="errorCode_15">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_16" width="10%">无</td>
+          <td id="msg_16" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[16];" id="errorCode_16">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_17" width="10%">无</td>
+          <td id="msg_17" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[17];" id="errorCode_17">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_18" width="10%">无</td>
+          <td id="msg_18" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[18];" id="errorCode_18">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_19" width="10%">无</td>
+          <td id="msg_19" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[19];" id="errorCode_19">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_20" width="10%">无</td>
+          <td id="msg_20" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[20];" id="errorCode_20">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_21" width="10%">无</td>
+          <td id="msg_21" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[21];" id="errorCode_21">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_22" width="10%">无</td>
+          <td id="msg_22" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[22];" id="errorCode_22">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_23" width="10%">无</td>
+          <td id="msg_23" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[23];" id="errorCode_23">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_24" width="10%">无</td>
+          <td id="msg_24" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[24];" id="errorCode_24">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_25" width="10%">无</td>
+          <td id="msg_25" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[25];" id="errorCode_25">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_26" width="10%">无</td>
+          <td id="msg_26" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[26];" id="errorCode_26">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_27" width="10%">无</td>
+          <td id="msg_27" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[27];" id="errorCode_27">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_28" width="10%">无</td>
+          <td id="msg_28" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[28];" id="errorCode_28">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_29" width="10%">无</td>
+          <td id="msg_29" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[29];" id="errorCode_29">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_30" width="10%">无</td>
+          <td id="msg_30" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[30];" id="errorCode_30">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_31" width="10%">无</td>
+          <td id="msg_31" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[31];" id="errorCode_31">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_32" width="10%">无</td>
+          <td id="msg_32" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[32];" id="errorCode_32">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_33" width="10%">无</td>
+          <td id="msg_33" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[33];" id="errorCode_33">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_34" width="10%">无</td>
+          <td id="msg_34" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[34];" id="errorCode_34">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_35" width="10%">无</td>
+          <td id="msg_35" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[35];" id="errorCode_35">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_36" width="10%">无</td>
+          <td id="msg_36" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[36];" id="errorCode_36">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_37" width="10%">无</td>
+          <td id="msg_37" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[37];" id="errorCode_37">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_38" width="10%">无</td>
+          <td id="msg_38" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[38];" id="errorCode_38">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_39" width="10%">无</td>
+          <td id="msg_39" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[39];" id="errorCode_39">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_40" width="10%">无</td>
+          <td id="msg_40" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[40];" id="errorCode_40">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_41" width="10%">无</td>
+          <td id="msg_41" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[41];" id="errorCode_41">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_42" width="10%">无</td>
+          <td id="msg_42" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[42];" id="errorCode_42">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_43" width="10%">无</td>
+          <td id="msg_43" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[43];" id="errorCode_43">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_44" width="10%">无</td>
+          <td id="msg_44" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[44];" id="errorCode_44">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_45" width="10%">无</td>
+          <td id="msg_45" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[45];" id="errorCode_45">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_46" width="10%">无</td>
+          <td id="msg_46" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[46];" id="errorCode_46">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_47" width="10%">无</td>
+          <td id="msg_47" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[47];" id="errorCode_47">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_48" width="10%">无</td>
+          <td id="msg_48" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[48];" id="errorCode_48">无</a></td>
+        </tr>
+        <tr class="odd">
+          <td id="time_49" width="10%">无</td>
+          <td id="msg_49" width="30%">无</td>
+          <td width="10%"><a href="#" onclick="location.href=create_data[49];" id="errorCode_49">无</a></td>
+        </tr>
+      </tbody>
+
+    </table>
+
+  </div>
   <!-- <div class="icon" >
   <img src="image/002.png" class="icon" width="400px" height="350px" style="z-index: -1;"/>
   </div> -->

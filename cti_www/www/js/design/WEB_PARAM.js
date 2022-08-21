@@ -1,2 +1,2 @@
-var IP_PORT = 'ws://192.168.1.102:9095';
+var IP_PORT = 'ws://192.168.12.24:8085';
 var LICENSE = "";

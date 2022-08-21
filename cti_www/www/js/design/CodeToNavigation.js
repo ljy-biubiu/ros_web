@@ -30,7 +30,7 @@ var json2 =
     { "code": "code_56", "msg" :"运行时定位丢"},
     { "code": "code_57", "msg" :"暂停"},
     { "code": "code_58", "msg" :"等待"},
-    { "code": "code_59", "msg" :"系统错误（如节点挂）"},
+    { "code": "code_59", "msg" :"系统错误"},
     { "code": "code_60", "msg" :"任务繁忙"},
     { "code": "code_61", "msg" :"急停"},
     { "code": "code_62", "msg" :"遥控"},

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 		
@@ -8,7 +9,7 @@
     <title>无人车操作指南</title>
     <link href="static/css/markdown.css" rel="stylesheet">
     <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
-    <script type="text/javascript" src='./static/js/marked.min.js'></script>
+    <script type="text/javascript" src='https://cdn.jsdelivr.net/npm/marked/marked.min.js'></script>
     
     <!-- <script>mermaid.initialize({startOnLoad:true});</script> -->
     <!-- <script> -->
@@ -31,6 +32,7 @@
     </style>
 
 
+      </script>
     <script type="text/javascript">
       function showMarkdown() {
         var xmlhttp;
@@ -58,12 +60,11 @@
                                                             </article>`;
           }
         }
-        
+  
         // 向服务器发送请求
         xmlhttp.open('GET', './document/errorcode_document/readmes.md', true);
         xmlhttp.send();
       }
-
     </script>
     <script>
         window.onload = function () {
@@ -116,16 +117,25 @@
               document.documentElement.scrollTop = document.body.scrollTop = pos;
               i++;
           }
-  
       },1)
   }
+
+  function goto_place()
+  {
+    var integrityurl = window.location.href
+    window.location.href=integrityurl;
+  }
+  
 </script>
 
 </head>
 
 <body>
     <div id="content"></div>
+    <button id ="button_l"  onclick="goto_place()" style="width:30px;height:15px;font-size:15px;position:absolute; right:50px; top:150px;">&nbsp;点击前往&nbsp;</button>
     <input type="button" id="toTop" class="toTop" value="返回顶部↑">
 </body>
 
 </html>
+
+<!-- location.reload(); -->

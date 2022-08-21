@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<script src="../js/ros2_web_lib/eventemitter2.min.js"></script>
+<script src="../js/ros2_web_lib/roslib.js"></script>
+<script src="../js/design/WEB_PARAM.js"></script>
+
+<script>
+  // Connecting to ROS
+  // -----------------
+  var ros = new ROSLIB.Ros({
+    url : IP_PORT
+  });
+
+  // If there is an error on the backend, an 'error' emit will be emitted.
+  ros.on('error', function(error) {
+    document.getElementById('connection_status').innerHTML = ('服务器状态（错误）');
+  });
+
+  // Find out exactly when we made a connectio
+  ros.on('connection', function() {
+    document.getElementById('connection_status').innerHTML = ('服务器状态（正常）');
+  });
+
+  ros.on('close', function() {
+    document.getElementById('connection_status').innerHTML = ('服务器状态（关闭）');
+  });
+
+  // Publish a Topic
+  var example_pub = new ROSLIB.Topic({
+    ros : ros,
+    name : '/example_topic_pub',
+    messageType : 'std_msgs/String'
+  });
+  function pub_a_message()
+  {
+    var message = 'hello from ros2bridge ';
+    example_pub.publish({data: message});
+  }
+
+
+
+
+  
+  // Publish a Topic
+  var example_sub = new ROSLIB.Topic({
+    ros : ros,
+    name : '/example_topic_sub',
+    messageType : 'std_msgs/String'
+  });
+
+  // Subscribe a Topic
+  example_sub.subscribe(function(message) {
+    document.getElementById("subscription").innerText = message.data
+  });
+
+  pub_a_message();
+  
+  // var count = 0;
+  // setInterval(() => {
+  //   var message = 'hello from ros2bridge ' + count++;
+  //   example_pub.publish({data: message});
+  //   document.getElementById("publisher").innerText = message;
+  // }, 1000);
+
+  // Publishing a Topic
+  var cmd_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/rosweb/cmd',
+      messageType: 'std_msgs/Int32'
+    });
+
+    var command = new ROSLIB.Message({
+      data: 0
+    });//创建一个message
+    function send_command(message) {
+      command.data = message;
+      cmd_pub.publish(command);//发布消息
+    }
+    send_command(0);
+
+
+</script>
+</head>
+
+<body>
+  <h1>Simple Publisher Example</h1>
+  <p>This example will pubilish a topic named "example_topic".</p>
+  <div >
+    <p id="connection_status">
+      连接中...
+    </p>
+  </div>
+</body>
+</html>

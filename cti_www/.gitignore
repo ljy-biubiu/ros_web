@@ -1,0 +1,15 @@
+*~
+.DS_Store
+.*.sw?
+*.gypcmd
+*.mk
+*.pyc
+*.tar.gz
+*.log
+build
+cscope.*
+gen
+npm-debug.log
+tags
+cpplint.py
+generated

@@ -1,30 +1,31 @@
 <?xml version="1.0"?>
-<package>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>cti_mapsample</name>
-  <version>0.1.0</version>
+  <version>0.0.0</version>
   <description> cti_mapsample</description>
-  <maintainer email="lrd@gmail.com">lrd</maintainer>
-  <author>lrd</author>
+  <maintainer email="1072233276@qq.com">ljy</maintainer>
+  <author>ljy</author>
   <license>BSD</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>message_generation</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>cti_msgs</build_depend>
-  <build_depend>cti_vector_map_msgs</build_depend>
-  <build_depend>cti_rblite_msgs</build_depend>
-  <build_depend>tf</build_depend>
-  <build_depend>cv_bridge</build_depend>
-  <build_depend>ctilog</build_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>cti_msgs</run_depend>
-  <run_depend>cti_vector_map_msgs</run_depend>
-  <run_depend>cti_rblite_msgs</run_depend>
-  <run_depend>tf</run_depend>
-  <run_depend>cv_bridge</run_depend>
-  <run_depend>ctilog</run_depend>
+  <depend>ament_index_cpp</depend>
+  <depend>cti_msgs</depend>
+  <depend>cti_vector_map_msgs</depend>
+  <depend>cti_rblite_msgs</depend>
+  <depend>diagnostic_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>tf2_msgs</depend>
+  <depend>rclcpp</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2</depend>
 
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
 

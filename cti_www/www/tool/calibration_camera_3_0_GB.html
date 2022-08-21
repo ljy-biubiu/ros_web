@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script type="text/javascript"
+    src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script src="../js/roslibjs/roslib.js"></script>
+  <script src="../js/design/WEB_PARAM.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="../css/style.css">
+
+  <script type="text/javascript" type="text/javascript">
+
+    function warn_() {
+      if (confirm("你确定开始校准摄像头吗？")) {
+        var code = prompt("请输入管理员密码")
+        if (code != 123456) {
+          alert("密码错误！");
+          window.location.href = "../tool.html"
+        }
+        alert("清除或校准后请务必检查校准结果");
+      }
+    }
+
+    warn_();
+
+        var aa = window.localStorage.getItem('/home/ljy/dev/catkin_wx/src/cti_data_viewer/cti_www/www/license.js'); //读存储的数据
+                var aaObj = JSON.parse(aa); //将JSON字符串转化成JSON对象方便读取
+                var LICENSE = aaObj.license;
+                var IP_PORT = aaObj.ip_port;
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+      url: IP_PORT
+    });
+    console.log(IP_PORT);
+
+
+    var color = '#99bebe ';
+    var style;
+
+    function createStyle() {
+      style = document.createElement('style');
+      style.type = 'text/css';
+    }
+    function changeBackgroundColor() {
+      if (!style.parentNode) document.head.appendChild(style);
+    }
+    function changeColor() {
+      var color = "yellow|green|blue";
+      color = color.split("|");
+      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
+    }
+    setInterval("changeColor()", 500);
+    createStyle();
+    changeBackgroundColor();
+
+    //判断是否连接成功并输出相应的提示消息到web控制台
+    ros.on('connection', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+      style.innerHTML = 'body {background-color: #bebfc0 ;}';
+    });
+
+    ros.on('error', function (error) {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+    ros.on('close', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+      alert("服务器连接中断，请检查网络状态，并刷新当前页面");
+    });
+
+    // Subscribing to a Topic
+    var node_live = new ROSLIB.Topic({
+      ros: ros,
+      name: '/camera_calibrator/state',
+      messageType: 'std_msgs/msg/Int32'
+    });
+
+    node_live.subscribe(function (message) {
+
+	    if (parseInt(message.data & (1 << 6)) != 0) {
+      console.log("前上摄像头内参已标定");
+      document.getElementById("front_inter_result").innerHTML = "已校准";
+    }
+    if (parseInt(message.data & (1 << 7)) != 0) {
+      console.log("后上摄像头内参已标定");
+      document.getElementById("back_down_inter_result").innerHTML = "已校准";
+    }
+    if (parseInt(message.data & (1 << 8)) != 0) {
+      console.log("后下摄像头内参已标定");
+      document.getElementById("back_inter_lidar_result").innerHTML = "已校准";
+    }
+
+    if (parseInt(message.data & (1 << 15)) != 0) {
+      console.log("空闲，前上摄像头雷达已标定（外参）");
+      document.getElementById("front_outer_result").innerHTML = "已校准";
+    }
+    if (parseInt(message.data & (1 << 16)) != 0) {
+      console.log("空闲，前下摄像头雷达已标定（外参）");
+      document.getElementById("back_down_outer_result").innerHTML = "已校准";
+    }
+    if (parseInt(message.data & (1 << 17)) != 0) {
+      console.log("空闲，后摄像头雷达已标定（外参）");
+      document.getElementById("back_outer_lidar_result").innerHTML = "已校准";
+    }
+
+
+
+    if (parseInt(message.data & (1 << 0)) != 0) {
+      console.log("前上摄像头数据收集中");
+    } else if (parseInt(message.data & (1 << 1)) != 0) {
+      console.log("前下摄像头数据收集中");
+    } else if (parseInt(message.data & (1 << 2)) != 0) {
+      console.log("后摄像头数据收集中");
+    } else if (parseInt(message.data & (1 << 3)) != 0) {
+      console.log("前上摄像头标定计算中");
+    } else if (parseInt(message.data & (1 << 4)) != 0) {
+      console.log("前下摄像头标定计算中");
+    } else if (parseInt(message.data & (1 << 5)) != 0) {
+      console.log("后摄像头标定计算中");
+    } else if (parseInt(message.data & (1 << 9)) != 0) {
+      console.log("前上摄像头雷达数据收集中");
+    } else if (parseInt(message.data & (1 << 10)) != 0) {
+      console.log("前下摄像头雷达数据收集中");
+    } else if (parseInt(message.data & (1 << 11)) != 0) {
+      console.log("后摄像头雷达数据收集中");
+    } else if (parseInt(message.data & (1 << 12)) != 0) {
+      console.log("前上摄像头雷达标定计算中");
+    } else if (parseInt(message.data & (1 << 13)) != 0) {
+      console.log("前下摄像头雷达标定计算中");
+    } else if (parseInt(message.data & (1 << 14)) != 0) {
+      console.log("后摄像头雷达标定计算中");
+    }
+
+    });
+
+
+
+    // Subscribing to a Topic
+    var listener_ = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/web/calibration_camera_3_0',
+      messageType: 'std_msgs/String'
+    });
+
+    listener_.subscribe(function (message) {
+      var ima = document.getElementById("tus");
+      ima.src = message.data
+    });
+
+    // Publishing a Topic
+    var cmd_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/camera_calibrator/cmd',
+      messageType: 'std_msgs/String'
+    });
+
+    var command = new ROSLIB.Message({
+      data: ""
+    });//创建一个message
+    function send_command(message) {
+      command.data = message;
+      cmd_pub.publish(command);//发布消息
+    }
+
+    var calibration_status;
+
+    function calibrate_press()
+    {
+      var a = prompt("请输入“确认”","确认");
+      if( a == "确认" ) 
+      {
+        calibration_status = "calib"; 
+	    send_command(calibration_status);
+      }
+    }
+
+    function save_press()
+    {
+      var a = prompt("请输入“确认”","确认");
+      if( a == "确认" ) 
+      {
+	    calibration_status = "save"; 
+	    send_command(calibration_status);
+      }
+    }
+
+    function close_press()
+    {
+      var a = prompt("请输入“确认”","确认");
+      if( a == "确认" ) 
+      {
+	    calibration_status = "end"; 
+	    send_command(calibration_status);
+      }
+    }
+
+    function versionChange()
+    {
+      var myselect=document.getElementById("version_selection");
+      var index=myselect.selectedIndex ;
+      var value=myselect.options[index].value;
+      send_command(value);
+      console.log(value);
+    }
+    
+  </script>
+
+
+<body>
+  <div style="margin-left:20%;padding:1px 16px;height:2000px;overflow:hidden;">
+
+    <div class="srv_state">
+      <p id="connect_status">服务器状态（未响应）</p>
+    </div>
+
+    <title>摄像头校准工具</title>
+    <h1 >摄像头校准工具</h1>
+
+   <div>
+      <br /><br />
+      <p class="inline">
+      <h4 class="inline">状态：</h4>
+      <p id="statu" class="inline">无</p>
+      </p>
+    </div>
+
+
+    <select id="version_selection" onchange="versionChange()" style="height:60px"> 
+      <option value="0"  selected="selected">无</option> 
+      <option value ="front_top">前上</option>
+      <option value ="front_low">前下</option>
+      <option value ="rear">后方</option>
+    </select>&nbsp;&nbsp;
+
+  <button onclick="calibrate_press()"style="width:150px;" >&nbsp; 校准 &nbsp;</button>&nbsp;&nbsp;&nbsp;
+  <button onclick="save_press()"style="width:150px;" >&nbsp; 保存 &nbsp;</button>
+  <button onclick="close_press()"style="width:150px;" >&nbsp; 结束 &nbsp;</button>
+  <div></div>
+  <br /><br />
+
+  <div align="center">
+    <img  id="tus" src="image/lidar_ma.png" class= "camera"  width="960px" height="540px" >
+  </div>
+
+  <table width="80%" cellspacing="1" cellpadding="1" bgcolor=#D8D8D8 border="1" height="10"
+      style="position:absolute; left:5px; bottom:0px;">
+      <tr align="center">
+        <td width="10%" class="btbg font-center titfont" colspan="6">校准状态</td>
+      </tr>
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">前上摄像头内参</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">前下摄像头内参</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">后摄像头内参</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">前上摄像头（外参）</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">前下摄像头（外参）</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">后摄像头（外参）</td>
+      </tr>
+      <tr>
+        <td id="front_inter_result">未校准&nbsp;</td>
+        <td id="back_down_inter_result">未校准&nbsp;</td>
+        <td id="back_inter_lidar_result">未校准&nbsp;</td>
+        <td id="front_outer_result">未校准&nbsp;</td>
+        <td id="back_down_outer_result">未校准&nbsp;</td>
+        <td id="back_outer_lidar_result">未校准&nbsp;</td>
+      </tr>
+
+    </table>
+
+
+</div>
+
+</body>
+</html>

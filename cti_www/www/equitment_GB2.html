@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script type="text/javascript"
+    src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script src="js/roslibjs/roslib.js"></script>
+  <script src="js/design/WEB_PARAM.js"></script>
+  <script src="js/design/code_tranlate.js"></script>
+  <script src="js/design/sensorToChinese.js"></script>
+  <script src="js/design/hardware_Err.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+
+
+
+  <script type="text/javascript" type="text/javascript">
+
+    var aa = window.localStorage.getItem('/home/ljy/dev/catkin_wx/src/cti_data_viewer/cti_www/www/license.js'); //读存储的数据
+    var aaObj = JSON.parse(aa); //将JSON字符串转化成JSON对象方便读取
+    var LICENSE = aaObj.license;
+    var IP_PORT = aaObj.ip_port;
+
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+      url: IP_PORT
+    });
+
+    var color = '#99bebe ';
+    var style;
+
+    function createStyle() {
+      style = document.createElement('style');
+      style.type = 'text/css';
+    }
+    function changeBackgroundColor() {
+      if (!style.parentNode) document.head.appendChild(style);
+    }
+    function changeColor() {
+      var color = "yellow|green|blue";
+      color = color.split("|");
+      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
+    }
+    setInterval("changeColor()", 500);
+    createStyle();
+    changeBackgroundColor();
+
+    //判断是否连接成功并输出相应的提示消息到web控制台
+    ros.on('connection', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+      style.innerHTML = 'body {background-color: #bebfc0 ;}';
+    });
+
+    ros.on('error', function (error) {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+    });
+
+    ros.on('close', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+      style.innerHTML = 'body {background-color: #4f5257  ;}';
+      alert("服务器连接中断，请检查wifi状态，并刷新当前页面");
+    });
+    ///////////////////////////////////////////////////////////
+
+
+    /////////////////////////////////////////////////////////风机 电压电流功率
+
+
+    // Subscribing to a Topic
+    var sanitation_dustbox_state_msg = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/chassis_serial/sanitation_dustbox_state',
+      messageType: 'cti_msgs/DataArray'
+    });
+
+
+    sanitation_dustbox_state_msg.subscribe(function (message) {
+
+      var volt_max = 0;
+      var volt1 = 0;
+      var volt2 = 0;
+      var volt3 = 0;
+      var volt4 = 0;
+      var volt_array = [volt1, volt2, volt3, volt4];
+      current_ = 0;
+
+      for (var i = 0; i < message.datas.length; i++) {
+        if (message.datas[i].name == "fan_current") {
+          current_ = Number(message.datas[i].data);
+        }
+
+        if (message.datas[i].name == "bat1_vol") {
+          volt_array[0] = message.datas[i].data;
+          current_ = Number(volt1);
+
+        }
+
+        if (message.datas[i].name == "bat2_vol") {
+          volt_array[1] = message.datas[i].data;
+          current_ = Number(volt2);
+        }
+
+        if (message.datas[i].name == "bat3_vol") {
+          volt_array[2] = message.datas[i].data;
+          current_ = Number(volt3);
+        }
+
+        if (message.datas[i].name == "bat4_vol") {
+          volt_array[3] = message.datas[i].data;
+          current_ = Number(volt4);
+        }
+        if (message.datas[i].name == "mannual_work") {
+          if (message.datas[i].data == 0) //自动工作模式 0: 无效,无此功能 1：关 2：开
+          {
+            document.getElementById("fan_mode").innerHTML = "0(无效,无此功能)";
+          }
+          else if (message.datas[i].data == 1) {
+            document.getElementById("fan_mode").innerHTML = "1(关，风机手动模式)";
+          }
+          else {
+            document.getElementById("fan_mode").innerHTML = "2(開，风机自动模式)";
+          }
+        }
+        if (message.datas[i].name == "fan_Speed") {
+          document.getElementById("fan_velocity").innerHTML = message.datas[i].data;
+        }
+        if (message.datas[i].name == "fan_speed_hd") {
+          document.getElementById("fan_velocity_hd").innerHTML = message.datas[i].data;
+        }
+        if (message.datas[i].name == "dust_distance") {
+          document.getElementById("dust_distance").innerHTML = message.datas[i].data + " cm";
+        }
+        if (message.datas[i].name == "dust_autopush") {
+          document.getElementById("dust_dump_status").innerHTML = message.datas[i].data;
+        }
+        if (message.datas[i].name == "trash_percent") {
+          document.getElementById("dust_percent").innerHTML = message.datas[i].data + "%";
+        }
+        if (message.datas[i].name == "auto_work") {
+          if (message.datas[i].data == 0) //自动工作模式 0: 无效,无此功能 1：关 2：开
+          {
+            document.getElementById("cover_plate").innerHTML = "0(无效,无此功能)";
+          }
+          else if (message.datas[i].data == 1) {
+            document.getElementById("cover_plate").innerHTML = "1(关，盖板手动模式)";
+          }
+          else {
+            document.getElementById("cover_plate").innerHTML = "2(開，盖板自动模式)";
+          }
+        }
+        if (message.datas[i].name == "workmode") {
+          if (message.datas[i].data == -1) {
+            document.getElementById("dustbox_workmode").innerHTML = "-1(未识别到传感器）";
+          }
+          else if (message.datas[i].data == 0) {
+            document.getElementById("dustbox_workmode").innerHTML = "0(自动模式)";
+          }
+          else if (message.datas[i].data == 1) {
+            document.getElementById("dustbox_workmode").innerHTML = "1(人机模式)";
+          }
+          else if (message.datas[i].data == 2 || message.datas[i].data == 3 || message.datas[i].data == 4) {
+            document.getElementById("dustbox_workmode").innerHTML = "状态异常";
+          }
+        }
+        if (message.datas[i].name == "error_code") {
+          document.getElementById("suction_box_err").innerHTML = message.datas[i].data;
+        }
+
+      }
+
+      //////////////////////////////////////////////////
+
+      for (var j = 0; j < volt_array.length; j++) {
+        if (volt_array[j] >= volt_max) {
+          volt_max = volt_array[j];
+        }
+      }
+
+      document.getElementById("current_fan").innerHTML = current_ + " A";
+      document.getElementById("fan_volt").innerHTML = volt_max + " V";
+      document.getElementById("fan_watt").innerHTML = volt_max * current_ + " W";
+    });
+    ////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    // Subscribing to a Topic
+    var sanitation_vehicle_state_msg = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/chassis_serial/sanitation_vehicle_state',
+      messageType: 'cti_msgs/DataArray'
+    });
+
+
+    sanitation_vehicle_state_msg.subscribe(function (message) {
+      console.log("sssssssssssssssss");
+      for (var i = 0; i < message.datas.length; i++) {
+        if (message.datas[i].name == "sidebrush_state") {
+          document.getElementById("sidebrush_percent_").innerHTML = message.datas[i].data;
+        }
+        if (message.datas[i].name == "sidebrush_speed") {
+          document.getElementById("sidebrush_speed_").innerHTML = message.datas[i].data;
+        }
+        if (message.datas[i].name == "water_percent") {
+          document.getElementById("water_percent_").innerHTML = message.datas[i].data + "%";
+        }
+        if (message.datas[i].name == "dam_board_status") {
+          if (message.datas[i].data == 0) {
+            document.getElementById("dam_board_status_").innerHTML = "0(挡板常闭）";
+          }
+          else if (message.datas[i].data == 1) {
+            document.getElementById("dam_board_status_").innerHTML = "1(挡板半开)";
+          }
+          else if (message.datas[i].data == 2) {
+            document.getElementById("dam_board_status_").innerHTML = "2(挡板全开)";
+          }
+          else if (message.datas[i].data == 3) {
+            document.getElementById("dam_board_status_").innerHTML = "3(挡板开合)";
+          }
+        }
+        if (message.datas[i].name == "motor_status") {
+          document.getElementById("motor_status_").innerHTML = message.datas[i].data;
+        }
+        if (message.datas[i].name == "error_code") {
+          document.getElementById("clear_area_err").innerHTML = message.datas[i].data;
+        }
+        if (message.datas[i].name == "increase_water_pump_") {
+          document.getElementById("increase_water_pump").innerHTML = message.datas[i].data;
+        }
+        if (message.datas[i].name == "increase_water_pump_") {
+          document.getElementById("increase_water_pump").innerHTML = message.datas[i].data;
+        }
+        if (message.datas[i].name == "water_tank_bottom") {
+          document.getElementById("water_tank_bottom_").innerHTML = message.datas[i].data;
+        }
+      }
+    });
+
+  </script>
+
+
+
+
+<body>
+
+  <ul>
+    <strong>
+      <li><a class="title_left" href="vihicle_GB2.html">车辆状态</a></li>
+      <li><a class="title_left" href="lidar_GB2.html">导航状态</a></li>
+      <li><a class="title_left" href="#home">底盘状态</a></li>
+      <li><a class="title_left" href="diary_GB2.html">错误日志</a></li>
+      <li><a class="title_left" href="tool _GB2.html">其他工具</a></li>
+    </strong>
+  </ul>
+
+  <div style="margin-left:20%;padding:1px 16px;height:1000px;">
+    <div class="srv_state">
+      <p id="connect_status">服务器状态（未响应）</p>
+    </div>
+    <title>阳光无人车</title>
+    <h1 id="license">阳光无人车</h1>
+
+
+    <script>
+      LICENSE = '阳光无人车-' + LICENSE;
+      document.getElementById("license").innerHTML = LICENSE;
+    </script>
+
+    <br /><br /><br />
+    <h3>风机状态:</h3>
+
+    <table width="80%" cellspacing="1" cellpadding="9" bgcolor=#D8D8D8 border="1" align="center" height="100">
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">电流/A</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">电压/V</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">功率/W</td>
+      </tr>
+      <tr>
+      <tr>
+        <td id="current_fan">NULL&nbsp;</td>
+        <td id="fan_volt">NULL&nbsp;</td>
+        <td id="fan_watt">NULL&nbsp;</td>
+      </tr>
+      </tr>
+      <tr>
+        <td> 风机速度值(控制反馈)</td>
+        <td colspan="2" id="fan_velocity">NULL&nbsp; </td>
+      </tr>
+      <tr>
+        <td> 风机速度值(硬件反馈)</td>
+        <td colspan="2" id="fan_velocity_hd">NULL&nbsp; </td>
+      </tr>
+      <tr>
+        <td> 风机工作模式</td>
+        <td colspan="2" id="fan_mode">NULL&nbsp; </td>
+      </tr>
+    </table>
+
+
+    <h3>垃圾量/水量:</h3>
+
+    <table width="80%" cellspacing="1" cellpadding="9" bgcolor=#D8D8D8 border="1" align="center" height="100">
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">垃圾量百分比</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1" id="dust_percent">NULL</td>
+      </tr>
+      <tr>
+        <td> 垃圾距顶盖的距离</td>
+        <td id="dust_distance">NULL&nbsp; </td>
+      </tr>
+      <tr>
+        <td> 自动倾倒垃圾的状态</td>
+        <td id="dust_dump_status">NULL&nbsp; </td>
+      </tr>
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">水量百分比</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1" id="water_percent_">NULL</td>
+      </tr>
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">水箱低水位</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1" id="water_tank_bottom_">NULL</td>
+      </tr>
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">加水水泵状态</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1" id="increase_water_pump_">NULL</td>
+      </tr>
+    </table>
+
+    <h3>盖板/挡板状态:</h3>
+
+    <table width="80%" cellspacing="1" cellpadding="9" bgcolor=#D8D8D8 border="1" align="center" height="80">
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">盖板工作模式</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1" id="cover_plate">NULL</td>
+      </tr>
+      <tr>
+        <td>挡板工作模式</td>
+        <td id="dam_board_status_">NULL</td>
+      </tr>
+    </table>
+
+    <h3>箱子工作模式:</h3>
+
+    <table width="80%" cellspacing="1" cellpadding="9" bgcolor=#D8D8D8 border="1" align="center" height="80">
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1" id="dustbox_workmode">NULL</td>
+      </tr>
+    </table>
+
+    <h3>边刷状态:</h3>
+
+    <table width="80%" cellspacing="1" cellpadding="9" bgcolor=#D8D8D8 border="1" align="center" height="80">
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">实际边刷比值</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1" id="sidebrush_percent_">NULL</td>
+      </tr>
+      <tr>
+        <td> 实际边刷速度值</td>
+        <td id="sidebrush_speed_">NULL&nbsp; </td>
+      </tr>
+      <tr>
+        <td> 电机状态</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1" id="motor_status_">NULL</td>
+      </tr>
+    </table>
+
+    <h3>错误码:</h3>
+
+    <table width="80%" cellspacing="1" cellpadding="9" bgcolor=#D8D8D8 border="1" align="center" height="80">
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">吸尘箱错误码</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1" id="suction_box_err">NULL</td>
+      </tr>
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">清扫模块错误码</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1" id="clear_area_err">NULL</td>
+      </tr>
+    </table>
+    <br /><br /><br />
+
+  </div>
+
+</body>
+
+</html>

@@ -448,7 +448,7 @@ const bool CFTPClient::RemoveFile(const std::string &strRemoteFile) const {
  * 15:04:45 2016
  * @endcode
  */
-const bool CFTPClient::Info_(const std::string &strRemoteFile, struct FileInfo &oFileInfo) const {
+const bool CFTPClient::Info(const std::string &strRemoteFile, struct FileInfo &oFileInfo) const {
    if (strRemoteFile.empty()) return false;
 
    if (!m_pCurlSession) {

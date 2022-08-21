@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script src="js/ros2_web_lib/eventemitter2.min.js"></script>
+  <script src="js/ros2_web_lib/roslib.js"></script>
+  <script src="js/design/WEB_PARAM.js"></script>
+  <script src="js/require.js" ></script>
+
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+
+
+  <script type="text/javascript" type="text/javascript">
+
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+      url: IP_PORT
+    });
+    console.log(LICENSE);
+    console.log(IP_PORT);
+    //判断是否连接成功并输出相应的提示消息到web控制台
+    ros.on('connection', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+    });
+
+    ros.on('error', function (error) {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+    });
+
+    ros.on('close', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+    });
+
+    // Publishing a Topic
+    var cmd_pub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/rosweb/cmd',
+      messageType: 'std_msgs/Int32'
+    });
+
+    var command = new ROSLIB.Message({
+      data: 0
+    });//创建一个message
+    function send_command(message) {
+      command.data = message;
+      cmd_pub.publish(command);//发布消息
+    }
+
+    // Subscribing to a Topic
+    var listener = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/rosweb/state',
+      messageType: 'std_msgs/String'
+    });
+
+    listener.subscribe(function (message) {
+      var jsonObj = window.JSON.parse(message.data);
+      document.getElementById("run_state").innerHTML = jsonObj.runstate;
+      document.getElementById("sensor_state").innerHTML = jsonObj.sensorstate;
+      document.getElementById("longitude").innerHTML = jsonObj.longitude;
+      document.getElementById("latitude").innerHTML = jsonObj.latitude;
+      document.getElementById("altitude").innerHTML = jsonObj.altitude;
+      document.getElementById("lat_err").innerHTML = jsonObj.lat_err;
+      document.getElementById("lon_err").innerHTML = jsonObj.lon_err;
+      document.getElementById("sats_used").innerHTML = jsonObj.sats_used;
+      document.getElementById("message").innerHTML = jsonObj.message;
+
+      aa=document.getElementById("message");
+      aa.style.backgroundColor ="grap";
+      if(jsonObj.message == "建图异常，请处理...")
+      {
+        aa.style.backgroundColor ="red";
+      }
+      
+    });
+  </script>
+
+<body>
+
+  <ul>
+    <strong>
+      <li><a class="title_left" href="vihicle.html">车辆状态</a></li>
+      <li><a class="title_left" href="lidar.html">导航状态</a></li>
+      <li><a class="title_left" href="#about">建图工具</a></li>
+      <li><a class="title_left" href="diary.html">错误日志</a></li>
+      <li><a class="title_left" href="tool.html">其他工具</a></li>
+    </strong>
+  </ul>
+
+  <div style="margin-left:20%;padding:1px 16px;height:1000px;">
+
+    <div class="srv_state">
+      <p id="connect_status">服务器状态（未响应）</p>
+      <p id="run_state">当前状态</p>
+      <p id="sensor_state">传感器状态</p>
+    </div>
+
+    <title>阳光无人车</title>
+    <h1 id="license">阳光无人车</h1>
+
+
+    <script language="javascript">
+      function comfirm_press_buildmap() {
+        if (confirm("您确定要开始建图吗？")) {
+          send_command(1);
+        }
+        else {
+        }
+      }
+      function comfirm_press_endmap() {
+        if (confirm("您确定要结束建图吗？")) {
+          send_command(2);
+        }
+        else {
+        }
+      }
+      function comfirm_press_upload() {
+        if (confirm("您确定要开始上传地图吗？")) {
+          send_command(3);
+        }
+        else {
+        }
+      }
+      function custom_close() {
+        if (confirm("您确定要关机吗？")) {
+          send_command(-1);
+          //console.log(code_0);
+        }
+        else {
+        }
+      }
+  
+
+    LICENSE = '阳光无人车-' + LICENSE;
+    document.getElementById("license").innerHTML = LICENSE;
+    </script>
+
+
+    <table width="60%" cellspacing="1" cellpadding="9" bgcolor=#D8D8D8 border="1" align="center" height="100">
+      <tr>
+        <td width="5%" class="btbg font-center titfont" rowspan="1">INFOMATION</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">STATU</td>
+      </tr>
+      <tr>
+
+      </tr>
+      <tr>
+        <td>longitude:&nbsp;</td>
+        <td id="longitude">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td>latitude:&nbsp;</td>
+        <td id="latitude">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td>altitude:&nbsp;</td>
+        <td id="altitude">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td>lat_err:&nbsp;</td>
+        <td id="lat_err">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td>lon_err:&nbsp;</td>
+        <td id="lon_err">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td>sats_used:&nbsp;</td>
+        <td id="sats_used">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td>message:&nbsp;</td>
+        <td id="message">NULL&nbsp;</td>
+      </tr>
+
+    </table>
+    <br /><br /><br /><br /><br /><br />
+    <button onclick="comfirm_press_buildmap()"style="width:200px;" >&nbsp; 开始 &nbsp;</button>
+    <button onclick="comfirm_press_endmap()"style="width:200px;" >&nbsp; 结束 &nbsp;</button>
+    <button onclick="comfirm_press_upload()"style="width:200px;" >&nbsp;数据上传&nbsp;</button><br />
+    <input id="btnClose" type="button" value="关机" style="width:200px;height:50px;font-size:30px;position: absolute;right: 0;top: 0;" onClick="custom_close()" />
+  </div>
+  
+  <div class="icon" >
+  <img src="image/002.png" class="icon" width="400px" height="350px" style="z-index: -1;"/>
+  </div>
+
+</body>
+
+</html>

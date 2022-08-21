@@ -1,18 +1,53 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(ctiwww)
-find_package(catkin REQUIRED)
-catkin_package()
-catkin_python_setup()
 
-install(
-  PROGRAMS script/webserver.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
-install(DIRECTORY launch test www
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION} USE_SOURCE_PERMISSIONS
-)
-
-if (CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-  add_rostest(test/launch.test)
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
 endif()
+SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
+SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
+
+# # Default to C++17
+# if(NOT CMAKE_CXX_STANDARD)
+#   set(CMAKE_CXX_STANDARD 17)
+# endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic -fdiagnostics-color=always)
+endif()
+
+# # 安装可执行文件
+# install(TARGETS ${PROJECT_NAME}
+#   DESTINATION lib/${PROJECT_NAME}
+# )
+
+find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+
+# target_include_directories(${PROJECT_NAME} PUBLIC
+#   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+#   "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
+#   "$<INSTALL_INTERFACE:include>"
+#     ${catkin_LIBRARIES}
+#   )
+
+# target_link_libraries(${PROJECT_NAME}
+#     ${catkin_LIBRARIES}
+# )
+
+# ament_target_dependencies(${PROJECT_NAME}
+#   "ament_index_cpp"
+#   )
+
+#安装配置文件
+install(DIRECTORY
+  launch www
+  DESTINATION share/${PROJECT_NAME}/
+  )
+
+# if (CATKIN_ENABLE_TESTING)
+#   find_package(rostest REQUIRED)
+#   add_rostest(test/launch.test)
+# endif()
+ament_package()

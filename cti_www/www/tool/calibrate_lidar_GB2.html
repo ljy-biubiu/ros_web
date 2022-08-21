@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>雷达校准工具工具</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+	<meta HTTP-EQUIV="Cache-Control" CONTENT="no-cache">
+	<meta HTTP-EQUIV="Expires" CONTENT="0">
+	<link type="text/css" rel="stylesheet" href="../main.css">
+
+	<script type="text/javascript"
+		src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+	<script src="../js/roslibjs/roslib.js"></script>
+	<script src="../js/design/WEB_PARAM.js"></script>
+	<script src="../js/design/pointcloud.js"></script>
+	<!-- <script src="js/design/line2.js"></script>
+	<script src="js/design/line3.js"></script> -->
+	<script src="../three.js/build/three.js"></script>
+	<style>
+		body {
+			background-color: #fff;
+			color: #444;
+		}
+
+		canvas {
+			position: absolute;
+			top: 0;
+			left: 0;
+			z-index: -1;
+			display: block;
+		}
+	</style>
+
+
+
+	<script type="module">
+
+		import * as THREE from '../three.js/build/three.module.js';
+
+		import Stats from '../three.js/examples/jsm/libs/stats.module.js';
+		import { PCDLoader } from '../three.js/examples/jsm/loaders/PCDLoader.js';
+		import { TrackballControls } from '../three.js/examples/jsm/controls/TrackballControls.js';
+		import { FirstPersonControls } from '../three.js/examples/jsm/controls/FirstPersonControls.js';
+
+
+		import {
+			BufferGeometry,
+			Float32BufferAttribute,
+			Points,
+			PointsMaterial
+		} from '../three.js/build/three.module.js';
+
+		
+		var aa = window.localStorage.getItem('/home/ljy/dev/catkin_wx/src/cti_data_viewer/cti_www/www/license.js'); //读存储的数据
+		var aaObj = JSON.parse(aa); //将JSON字符串转化成JSON对象方便读取
+		var LICENSE= aaObj.license;
+		var IP_PORT= aaObj.ip_port;
+
+		// Connecting to ROS
+		var ros = new ROSLIB.Ros({
+			url: IP_PORT
+		});
+
+		////////////////////////////////////////////////////////////////////////////////////////////// monitor calibration whether if exist
+
+		var monitor_lh_middle_pointcloud2 = new ROSLIB.Topic({
+			ros: ros,
+			name: '/calibration/sensor/lhlidar/lh_middle_pointcloud2/IsOk',
+			messageType: 'std_msgs/Bool'
+		});
+
+		monitor_lh_middle_pointcloud2.subscribe(function (message) {
+			if (message.data == false) {
+				var time_out_alert = "没有lh_middle雷达数据，请重新校准所有雷达,请重启页面";
+				alert(time_out_alert);
+				location.replace(document.referrer);
+			}
+		});
+
+		var monitor_livox = new ROSLIB.Topic({
+			ros: ros,
+			name: '/calibration/livox/lidar/IsOk',
+			messageType: 'std_msgs/Bool'
+		});
+
+		monitor_livox.subscribe(function (message) {
+			if (message.data == false) {
+				var time_out_alert = "没有livox雷达数据，请重新校准所有雷达,请重启页面";
+				alert(time_out_alert);
+				location.replace(document.referrer);
+			}
+		});
+
+		var monitor_back_lh_middle_pointcloud2 = new ROSLIB.Topic({
+			ros: ros,
+			name: '/calibration/sensor/lslidar/back/lh_lslidar_pointcloud/IsOk',
+			messageType: 'std_msgs/Bool'
+		});
+
+		monitor_back_lh_middle_pointcloud2.subscribe(function (message) {
+			if (message.data == false) {
+				var time_out_alert = "没有back/lh_lslidar雷达数据，请重新校准所有雷达,请重启页面";
+				alert(time_out_alert);
+				location.replace(document.referrer);
+			}
+		});
+
+		var monitor_Bpearl = new ROSLIB.Topic({
+			ros: ros,
+			name: '/calibration/sensor/rslidar/Bpearl_PointCloud2/IsOk',
+			messageType: 'std_msgs/Bool'
+		});
+
+		monitor_Bpearl.subscribe(function (message) {
+			if (message.data == false) {
+				var time_out_alert = "没有Bpearl_PointCloud2雷达数据，请重新校准所有雷达,请重启页面";
+				alert(time_out_alert);
+				location.replace(document.referrer);
+			}
+		});
+
+		var monitor_rear_right = new ROSLIB.Topic({
+			ros: ros,
+			name: '/calibration/sensor/rslidar/rear_right_PointCloud2/IsOk',
+			messageType: 'std_msgs/Bool'
+		});
+
+		monitor_rear_right.subscribe(function (message) {
+			if (message.data == false) {
+				var time_out_alert = "没有rear_right_PointCloud2雷达数据，请重新校准所有雷达,请重启页面";
+				alert(time_out_alert);
+				location.replace(document.referrer);
+			}
+		});
+
+		var monitor_front_left = new ROSLIB.Topic({
+			ros: ros,
+			name: '/calibration/sensor/rslidar/front_left_PointCloud2/IsOk',
+			messageType: 'std_msgs/Bool'
+		});
+
+		monitor_front_left.subscribe(function (message) {
+			if (message.data == false) {
+				var time_out_alert = "没有front_left_PointCloud2雷达数据，请重新校准所有雷达,请重启页面";
+				alert(time_out_alert);
+				location.replace(document.referrer);
+			}
+		});
+
+		////////////////////////////////////////////////////////////////////////////////////////////// each calibrative result 
+
+
+		////////////////////////////////////////////////////////////////////////////////////////////// monitor lidar whether if overtime
+
+
+		var monitor_Bpearl_whether_overtime = new ROSLIB.Topic({
+			ros: ros,
+			name: '/calibration/rsbpearl/result',
+			messageType: 'std_msgs/Bool'
+		});
+
+		monitor_Bpearl_whether_overtime.subscribe(function (message) {
+			if (message.data == false) {
+				var time_out_alert = "Bpearl雷达校准超时，请重新校准所有雷达,请重启页面";
+				alert(time_out_alert);
+				location.replace(document.referrer);
+			}
+			else {
+				var time_out_alert = "Bpearl雷达校准成功";
+				calibrate_success_front_flag = 1;
+				document.getElementById("front_lidar_result").innerHTML = "已校准";
+				alert(time_out_alert);
+			}
+		});
+
+		var monitor_livox_whether_overtime = new ROSLIB.Topic({
+			ros: ros,
+			name: '/calibration/livox/result',
+			messageType: 'std_msgs/Bool'
+		});
+
+		monitor_livox_whether_overtime.subscribe(function (message) {
+			if (message.data == false) {
+				var time_out_alert = "livox雷达校准超时，请重新校准所有雷达,请重启页面";
+				alert(time_out_alert);
+				location.replace(document.referrer);
+			}
+			else {
+				var time_out_alert = "livox雷达校准成功";
+				calibrate_success_count++;
+				calibrate_success_rear_flag = 1;
+				alert(time_out_alert);
+				document.getElementById("back_lidar_result").innerHTML = "已校准";
+			}
+		});
+
+
+		var monitor_lh_back_laser_whether_overtime = new ROSLIB.Topic({
+			ros: ros,
+			name: '/calibration/lh_back_laser_link/result',
+			messageType: 'std_msgs/Bool'
+		});
+
+		monitor_lh_back_laser_whether_overtime.subscribe(function (message) {
+			if (message.data == false) {
+				var time_out_alert = "lh_back_laser雷达校准超时，请重新校准所有雷达,请重启页面";
+				alert(time_out_alert);
+				location.replace(document.referrer);
+			}
+			else
+			{
+				var time_out_alert = "lh_back_laser雷达校准成功";
+				calibrate_success_rear_single_front_flag = 1;
+				alert(time_out_alert);
+				document.getElementById("back_scan_lidar_result").innerHTML = "已校准";
+			}
+		});
+
+		var monitor_lh_middle_laser_whether_overtime = new ROSLIB.Topic({
+			ros: ros,
+			name: '/calibration/lh_middle_laser_link/result',
+			messageType: 'std_msgs/Bool'
+		});
+
+		monitor_lh_middle_laser_whether_overtime.subscribe(function (message) {
+			if (message.data == false) {
+				var time_out_alert = "lh_middle_laser雷达校准超时，请重新校准所有雷达,请重启页面";
+				alert(time_out_alert);
+				location.replace(document.referrer);
+			}
+			else
+			{
+				var time_out_alert = "mid_scan_lidar雷达校准成功";
+				alert(time_out_alert);
+				document.getElementById("mid_scan_lidar_result").innerHTML = "已校准";
+			}
+		});
+
+		var monitor_livox_frame_front_left_whether_overtime = new ROSLIB.Topic({
+			ros: ros,
+			name: '/calibration/livox_frame_front_left/result',
+			messageType: 'std_msgs/Bool'
+		});
+
+		monitor_livox_frame_front_left_whether_overtime.subscribe(function (message) {
+			if (message.data == false) {
+				var time_out_alert = "livox_frame_front_left雷达校准超时，请重新校准所有雷达,请重启页面";
+				alert(time_out_alert);
+				location.replace(document.referrer);
+			}
+			else
+			{
+				var time_out_alert = "livox_frame_front_left雷达校准成功";
+				alert(time_out_alert);
+				document.getElementById("front_left_lidar_result").innerHTML = "已校准";
+				calibrate_success_front_left_flag = 1;
+			}
+		});
+
+		var monitor_livox_frame_rear_right_whether_overtime = new ROSLIB.Topic({
+			ros: ros,
+			name: '/calibration/livox_frame_rear_right/result',
+			messageType: 'std_msgs/Bool'
+		});
+
+		monitor_livox_frame_rear_right_whether_overtime.subscribe(function (message) {
+			if (message.data == false) {
+				var time_out_alert = "livox_frame_rear_right雷达校准超时，请重新校准所有雷达,请重启页面";
+				alert(time_out_alert);
+				location.replace(document.referrer);
+			}
+			else
+			{
+				var time_out_alert = "livox_frame_rear_right雷达校准成功";
+				alert(time_out_alert);
+				document.getElementById("rear_right_lidar_result").innerHTML = "已校准";
+				calibrate_success_rear_right_flag = 1;
+			}
+		});
+
+
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////front left
+const geometry_frontLeftLivox2Base = new BufferGeometry();
+		// Subscribing to a Topic  project 
+		var listener_frontLeftLivox2Base = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/web/livox/lidar/front_left',
+			messageType: 'sensor_msgs/PointCloud'
+		});
+
+		listener_frontLeftLivox2Base.subscribe(function (message) {
+			//scene.remove( geometry_rs );
+			//alert("ssssssssssssssssssssssssssssssss");
+			input_pointTcanvas_frontLeftLivox2Base(message.points);
+		});
+		/////////////////////////////////////////////////////////////////////////////////////////////
+
+		//////////////////////////////////////////////////////////////////////////////////////////front left
+		const geometry_rear_back = new BufferGeometry();
+		// Subscribing to a Topic  project 
+		var listener_rear_back = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/web/livox/lidar/rear_right',
+			messageType: 'sensor_msgs/PointCloud'
+		});
+
+		listener_rear_back.subscribe(function (message) {
+			//scene.remove( geometry_rs );
+			//alert("ssssssssssssssssssssssssssssssss");
+			input_pointTcanvas_rear_back(message.points);
+		});
+		/////////////////////////////////////////////////////////////////////////////////////////////
+
+		/////////////////////////////////////////////////////////////////////////////////////////////rslidar_mid_scan
+		const geometry_mid_scan = new BufferGeometry();
+		// Subscribing to a Topic  project 
+		var listener_mid_sacan = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/web/rslidar_mid_scan',
+			messageType: 'sensor_msgs/PointCloud'
+		});
+
+		listener_mid_sacan.subscribe(function (message) {
+			//scene.remove( geometry_rs );
+			//alert("ssssssssssssssssssssssssssssssss");
+			input_pointTcanvas_mid_scan(message.points);
+		});
+		/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+		/////////////////////////////////////////////////////////////////////////////////////////////rslidar_livox
+		const geometry_livox = new BufferGeometry();
+		// Subscribing to a Topic  project 
+		var listener_livox = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/web/rslidar_livox',
+			messageType: 'sensor_msgs/PointCloud'
+		});
+
+		listener_livox.subscribe(function (message) {
+			//scene.remove( geometry_rs );
+			//alert("ssssssssssssssssssssssssssssssss");
+			input_pointTcanvas_livox(message.points);
+		});
+		/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+		/////////////////////////////////////////////////////////////////////////////////////////////rslidar 
+		const geometry_rs = new BufferGeometry();
+		// Subscribing to a Topic  project 
+		var listener_rslidar = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/web/rslidar',
+			messageType: 'sensor_msgs/PointCloud'
+		});
+
+		listener_rslidar.subscribe(function (message) {
+			//scene.remove( geometry_rs );
+			//alert("ssssssssssssssssssssssssssssssss");
+			input_pointTcanvas_rs(message.points);
+		});
+		/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+		/////////////////////////////////////////////////////////////////////////////////////////////rslidar_Bpearl
+		const geometry_rs_bpe = new BufferGeometry();
+		// Subscribing to a Topic  project 
+		var listener_rslidarr_Bpearl = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/web/rslidarr_Bpearl',
+			messageType: 'sensor_msgs/PointCloud'
+		});
+
+		listener_rslidarr_Bpearl.subscribe(function (message) {
+			//scene.remove(geometry_rs_bpe);
+			input_pointTcanvas_rs_bpe(message.points);
+		});
+		/////////////////////////////////////////////////////////////////////////////////////////////
+
+		/////////////////////////////////////////////////////////////////////////////////////////////rslidar_back_lidar
+		const geometry_back_lidar = new BufferGeometry();
+		// Subscribing to a Topic  project 
+		var listener_back_lidar = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/web/rslidarr_lh_back',
+			messageType: 'sensor_msgs/PointCloud'
+		});
+
+		listener_back_lidar.subscribe(function (message) {
+			input_pointTcanvas_back_lidar(message.points);
+		});
+		/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+		// Publishing a Topic  calibrate lidar node
+		var calibrate_lidar_pub = new ROSLIB.Topic({
+			ros: ros,
+			name: '/select_calibration_lidar_type',
+			messageType: 'std_msgs/String'
+		});
+
+		var command_lidar = new ROSLIB.Message({
+			data: "0"
+		});//创建一个message
+
+		function send_lidar_Data(message) {
+			command_lidar.data = message;
+			calibrate_lidar_pub.publish(command_lidar);//发布消息
+		}
+
+		// Publishing a Topic
+		var cmd_pub = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/rosweb/cmd',
+			messageType: 'std_msgs/Int32'
+		});
+
+		var command = new ROSLIB.Message({
+			data: 0
+		});//创建一个message
+
+		function send_command(message) {
+			command.data = message;
+			cmd_pub.publish(command);//发布消息
+		}
+
+
+		var listener_back_lidar = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/web/tf_launch',
+			messageType: 'std_msgs/String'
+		});
+
+		listener_back_lidar.subscribe(function (message) {
+			alert(message.data);
+		});
+
+
+
+		// Subscribing to a Topic
+
+		let windowHalfX = window.innerWidth / 2;
+		let windowHalfY = window.innerHeight / 2;
+
+		var listener_ndt_pose = new ROSLIB.Topic({
+			ros: ros,
+			name: '/cti/web/timer',
+			messageType: 'std_msgs/String'
+		});
+
+		listener_ndt_pose.subscribe(function (message) {
+
+
+
+			if (calibrate_success_front_flag == 1 && calibrate_success_rear_flag == 1 || calibrate_success_front_left_flag == 1 &&  calibrate_success_rear_right_flag ==1) {
+				document.getElementById("button_calibrate_two").disabled = false;
+			}
+
+			if (request_tf_diary == 1) {
+				send_command(91);
+				request_tf_diary = 0;
+			}
+
+
+			if (close_calibration_node == 1) {
+				console.log("成功进来了");
+				send_command(90);
+				close_calibration_node = 0;
+			}
+
+			if (luanch_numb != "7") {
+				send_command(luanch_numb);
+				console.log(luanch_numb);
+				luanch_numb = "7";
+			}
+			//console.log( "==================" );
+			//console.log( calibrating_flag );
+			//console.log( "start_calibrate_flag" );
+			//console.log( "------------------" );
+			if (calibrating_flag == 1) {
+				if (start_calibrate_flag == 1) {
+					send_lidar_Data("rsbpearl");
+				}
+				else if (start_calibrate_flag == 2) {
+					send_lidar_Data("livox_frame");
+				}
+				else if (start_calibrate_flag == 3) {
+					send_lidar_Data("lh_middle_laser_link");
+				}
+				else if (start_calibrate_flag == 4) {
+					send_lidar_Data("lh_back_laser_link");
+				}
+				else if (start_calibrate_flag == 5) {
+					send_lidar_Data("livox_frame_front_left");
+				}
+				else if (start_calibrate_flag == 6) {
+					send_lidar_Data("livox_frame_rear_right");
+				}
+				calibrating_flag = 2;
+			}
+
+			if (pub_once_rs == 1) {
+				rs_count++;
+				pub_once_rs = 0;
+				send_command(50);
+				if (rs_count % 2 == 0) {
+					setTimeout(function () {
+						scene.remove(mesh_rs);
+					}, 100);
+				}
+			}
+			
+			if (pub_once_rs_bpe == 1) {
+				rs_count_bpe++;
+				pub_once_rs_bpe = 0;
+				send_command(51);
+				if (rs_count_bpe % 2 == 0) {
+					setTimeout(function () {
+						scene.remove(mesh_rs_bpe);
+					}, 100);
+				}
+			}
+
+			if (pub_once_rs_mid_back == 1) {
+				rs_count_mid_back++;
+				pub_once_rs_mid_back = 0;
+				send_command(53);
+				if (rs_count_mid_back % 2 == 0) {
+					setTimeout(function () {
+						scene.remove(mesh_mid_scan);
+					}, 100);
+				}
+			}
+
+			if (pub_once_rs_lh_back == 1) {
+				rs_count_lh_back++;
+				pub_once_rs_lh_back = 0;
+				send_command(52);
+				if (rs_count_lh_back % 2 == 0) {
+					setTimeout(function () {
+						scene.remove(mesh_lh_back);
+					}, 100);
+				}
+			}
+
+
+			if (pub_once_rs_livox == 1) {
+				rs_count_livox++;
+				pub_once_rs_livox = 0;
+				send_command(54);
+				if (rs_count_livox % 2 == 0) {
+					setTimeout(function () {
+						scene.remove(mesh_livox);
+					}, 100);
+				}
+			}
+
+			if (pub_once_rs_front_left == 1) {
+				rs_count__front_left++;
+				pub_once_rs_front_left = 0;
+				send_command(55);
+				if (rs_count__front_left % 2 == 0) {
+					setTimeout(function () {
+						scene.remove(mesh_frontLeft);
+					}, 100);
+				}
+			}
+
+			if (pub_once_rs_rear_right == 1) {
+				rs_count_rear_right++;
+				pub_once_rs_rear_right = 0;
+				send_command(56);
+				if (rs_count_rear_right % 2 == 0) {
+					setTimeout(function () {
+						scene.remove(mesh_rearright);
+					}, 100);
+				}
+			}
+
+			if (leftview == 1) {
+				if (lock1 == 1) {
+					camera.position.set(0, 100, 0);
+					camera.up.set(0, 0, 1);
+					camera.lookAt(0, 0, 0);
+					lock1 = 0;
+				}
+			}
+			else if (foreview == 1) {
+				if (lock2 == 1) {
+					camera.position.set(100, 0, 0);
+					camera.up.set(0, 0, 1);
+					camera.lookAt(0, 0, 0);
+					lock2 = 0;
+				}
+			}
+			else if (verticleview == 1) {
+				if (lock3 == 1) {
+					camera.position.set(0, 0, 100);
+					camera.up.set(0, 0, 1);
+					camera.lookAt(0, 0, 0);
+					lock3 = 0;
+				}
+			}
+			else if (anotherview == 1) {
+				if (lock4 == 1) {
+					camera.up.set(0.5, 0.5, 0.5);
+					lock4 = 0;
+				}
+			}
+		});
+
+
+
+		//放入点rs_
+		function input_pointTcanvas_rs(point_array) {
+			position_rs.length = 0;
+			for (var i = 0; i < point_array.length; i++) {
+				if (point_array[i].x == null) {
+					continue;
+				}
+				position_rs.push(point_array[i].x.toFixed(3));
+				position_rs.push(point_array[i].y.toFixed(3));
+				position_rs.push(point_array[i].z.toFixed(3));
+			}
+
+			geometry_rs.setAttribute('position', new Float32BufferAttribute(position_rs, 3));
+			//geometry_rs.setAttribute( 'normal', new Float32BufferAttribute( normal_rs, 3 ) );
+			geometry_rs.computeBoundingSphere();
+
+			const material_rs = new PointsMaterial({ size: 0.2 });
+			material_rs.color.setHex(0xFFF07A);
+
+			// var mesh_rs = new THREE.Mesh( geometry_rs, material_rs );
+
+			mesh_rs = new Points(geometry_rs, material_rs);
+
+			scene.add(mesh_rs);
+		}
+
+
+		//放入点frontLeft
+		function input_pointTcanvas_frontLeftLivox2Base(point_array) {
+			position_frontLeft.length = 0;
+			for (var i = 0; i < point_array.length; i++) {
+				if (point_array[i].x == null) {
+					continue;
+				}
+				position_frontLeft.push(point_array[i].x.toFixed(3));
+				position_frontLeft.push(point_array[i].y.toFixed(3));
+				position_frontLeft.push(point_array[i].z.toFixed(3));
+			}
+
+			geometry_frontLeftLivox2Base.setAttribute('position', new Float32BufferAttribute(position_frontLeft, 3));
+			//geometry_rs.setAttribute( 'normal', new Float32BufferAttribute( normal_rs, 3 ) );
+			geometry_frontLeftLivox2Base.computeBoundingSphere();
+
+			const material_frontLeft = new PointsMaterial({ size: 0.2 });
+			material_frontLeft.color.setHex(0x00FF00);
+
+			// var mesh_rs = new THREE.Mesh( geometry_rs, material_rs );
+
+			mesh_frontLeft = new Points(geometry_frontLeftLivox2Base, material_frontLeft);
+
+			scene.add(mesh_frontLeft);
+		}
+
+		//放入点rearright
+		function input_pointTcanvas_rear_back(point_array) {
+			position_rearright.length = 0;
+			for (var i = 0; i < point_array.length; i++) {
+				if (point_array[i].x == null) {
+					continue;
+				}
+				position_rearright.push(point_array[i].x.toFixed(3));
+				position_rearright.push(point_array[i].y.toFixed(3));
+				position_rearright.push(point_array[i].z.toFixed(3));
+			}
+
+			geometry_rear_back.setAttribute('position', new Float32BufferAttribute(position_rearright, 3));
+			//geometry_rs.setAttribute( 'normal', new Float32BufferAttribute( normal_rs, 3 ) );
+			geometry_rear_back.computeBoundingSphere();
+
+			const material_rearright = new PointsMaterial({ size: 0.2 });
+			material_rearright.color.setHex(0xFFB6C1);
+
+			// var mesh_rs = new THREE.Mesh( geometry_rs, material_rs );
+
+			mesh_rearright = new Points(geometry_rear_back, material_rearright);
+
+			scene.add(mesh_rearright);
+		}
+
+
+		//放入点rs_mid_scan
+		function input_pointTcanvas_mid_scan(point_array) {
+			position_mid_scan.length = 0;
+			for (var i = 0; i < point_array.length; i++) {
+				if (point_array[i].x == null) {
+					continue;
+				}
+				position_mid_scan.push(point_array[i].x.toFixed(3));
+				position_mid_scan.push(point_array[i].y.toFixed(3));
+				position_mid_scan.push(point_array[i].z.toFixed(3));
+			}
+
+			geometry_mid_scan.setAttribute('position', new Float32BufferAttribute(position_mid_scan, 3));
+			//geometry_rs.setAttribute( 'normal', new Float32BufferAttribute( normal_rs, 3 ) );
+			geometry_mid_scan.computeBoundingSphere();
+
+			const material_mid_scan = new PointsMaterial({ size: 0.2 });
+			material_mid_scan.color.setHex(0xFF0000);
+
+			// var mesh_rs = new THREE.Mesh( geometry_rs, material_rs );
+			console.log(point_array);
+			mesh_mid_scan = new Points(geometry_mid_scan, material_mid_scan);
+			scene.add(mesh_mid_scan);
+		}
+
+
+
+		//放入点rs_livox
+		function input_pointTcanvas_livox(point_array) {
+			position_livox.length = 0;
+			for (var i = 0; i < point_array.length; i++) {
+				if (point_array[i].x == null) {
+					continue;
+				}
+				position_livox.push(point_array[i].x.toFixed(3));
+				position_livox.push(point_array[i].y.toFixed(3));
+				position_livox.push(point_array[i].z.toFixed(3));
+			}
+
+			geometry_livox.setAttribute('position', new Float32BufferAttribute(position_livox, 3));
+			//geometry_rs.setAttribute( 'normal', new Float32BufferAttribute( normal_rs, 3 ) );
+			geometry_livox.computeBoundingSphere();
+
+			const material_livox = new PointsMaterial({ size: 0.2 });
+			material_livox.color.setHex(0xFF0000);
+
+			// var mesh_rs = new THREE.Mesh( geometry_rs, material_rs );
+			console.log(point_array);
+			mesh_livox = new Points(geometry_livox, material_livox);
+			scene.add(mesh_livox);
+		}
+
+
+
+		//放入点rs_bpe
+		function input_pointTcanvas_rs_bpe(point_array) {
+			position_rs_bpe.length = 0;
+			for (var i = 0; i < point_array.length; i++) {
+				if (point_array[i].x == null) {
+					continue;
+				}
+				position_rs_bpe.push(point_array[i].x.toFixed(3));
+				position_rs_bpe.push(point_array[i].y.toFixed(3));
+				position_rs_bpe.push(point_array[i].z.toFixed(3));
+			}
+
+			geometry_rs_bpe.setAttribute('position', new Float32BufferAttribute(position_rs_bpe, 3));
+			geometry_rs_bpe.computeBoundingSphere();
+
+			const material_rs_bpe = new PointsMaterial({ size: 0.2 });
+			material_rs_bpe.color.setHex(0xFF7AF0);
+
+			// var mesh_rs = new THREE.Mesh( geometry_rs, material_rs );
+
+			mesh_rs_bpe = new Points(geometry_rs_bpe, material_rs_bpe);
+			console.log(point_array);
+			scene.add(mesh_rs_bpe);
+		}
+
+
+
+		//放入点lh_back_lidar
+		function input_pointTcanvas_back_lidar(point_array) {
+			position_lh_back.length = 0;
+			for (var i = 0; i < point_array.length; i++) {
+				if (point_array[i].x == null) {
+					continue;
+				}
+				position_lh_back.push(point_array[i].x.toFixed(3));
+				position_lh_back.push(point_array[i].y.toFixed(3));
+				position_lh_back.push(point_array[i].z.toFixed(3));
+			}
+			// console.log("========================");
+			// console.log(position_lh_back);
+			geometry_back_lidar.setAttribute('position', new Float32BufferAttribute(position_lh_back, 3));
+			geometry_back_lidar.computeBoundingSphere();
+
+			const material_lh_back = new PointsMaterial({ size: 0.2 });
+			material_lh_back.color.setHex(0x00FF00);
+
+			// var mesh_rs = new THREE.Mesh( geometry_rs, material_rs );
+
+			mesh_lh_back = new Points(geometry_back_lidar, material_lh_back);
+
+			scene.add(mesh_lh_back);
+		}
+
+
+		container = document.getElementById('container');
+
+		camera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 1, 10000);
+
+
+		scene = new THREE.Scene();
+		scene.background = new THREE.Color(0x000000);
+
+		var geometry = new THREE.BoxGeometry(1.8, 0.8, 1.5);
+		var material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+		material.transparent = true;//是否透明
+		material.opacity = 0.5;//透明度
+		var cube = new THREE.Mesh(geometry, material);
+		cube.position.x = 0;
+		cube.position.y = 0;
+		cube.position.z = 10;
+		//scene.add(cube);
+
+		renderer = new THREE.WebGLRenderer({ antialias: true });
+		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		container.appendChild(renderer.domElement);
+
+
+
+		//鼠标事件
+		var controls = new TrackballControls(camera, renderer.domElement);                                //轨迹球控件，最常用的控件，可以使用鼠标轻松的移动、平移，缩放场景。
+
+		controls.rotateSpeed = 10;                                                                        //鼠标控制速度
+		controls.zoomSpeed = 1;                                                                           //鼠标控制速度
+		controls.panSpeed = 1;                                                                            //鼠标控制速度
+
+		controls.staticMoving = true;                                                                     // 静止移动，为 true 则没有惯性
+
+		controls.minDistance = 3;
+		controls.maxDistance = 0.3 * 10000;
+
+
+
+		animate();
+
+		function animate() {
+
+			requestAnimationFrame(animate);
+			render();
+		}
+
+		function render() {
+
+			cube.position.x = pose_x;
+			cube.position.y = pose_y;
+			cube.position.z = pose_z;
+			cube.rotation.z = yaw;
+
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			controls.update();
+			//stats.update();
+			renderer.render(scene, camera);
+
+		}
+		send_command(90);
+		setTimeout(function () {
+			console.log("延时 1 秒,等待关闭节点");
+			document.getElementById("lidar_selection").disabled = false;
+		}, 1000);   
+	</script>
+
+</head>
+
+<body>
+
+
+	<script>
+
+		function leftiew_FUNC() {
+			foreview = 0;
+			verticleview = 0;
+			leftview = 1;
+			anotherview = 0;
+			lock1 = 1;
+			console.log("----------1------------");
+		}
+		function foreview_FUNC() {
+			foreview = 1;
+			verticleview = 0;
+			leftview = 0;
+			anotherview = 0;
+			lock2 = 1;
+			console.log("-----------2-----------");
+		}
+		function verticleview_FUNC() {
+			foreview = 0;
+			verticleview = 1;
+			leftview = 0;
+			anotherview = 0;
+			lock3 = 1;
+			console.log("-----------3-----------");
+		}
+		function messview_FUNC() {
+			foreview = 0;
+			verticleview = 0;
+			leftview = 0;
+			anotherview = 1;
+			lock4 = 1;
+			console.log("------------4----------");
+		}
+		function active_button() {
+			document.getElementById("button_left").disabled = false;
+			document.getElementById("button_front").disabled = false;
+			document.getElementById("button_verticle").disabled = false;
+			document.getElementById("button_undefined_view").disabled = false;
+
+			document.getElementById("button_calibrate").disabled = false;
+			//document.getElementById("button_refresh").disabled=false;
+			//document.getElementById("button_calibrate_two").disabled=false;
+		}
+
+		function start_calibration_launch() {
+
+			if (confirm("确定启动该版本脚本？")) {
+				active_button();
+				//启动节点   system("roslauch ssssss.launch")
+				luanch_numb = 70;
+				pub_once_rs = 1;                                         // 启动上雷达
+			}
+			else 
+			{
+				location.replace(document.referrer);
+			}
+		}
+
+		var only_open_start_launch_once_flag = 0;
+		function lidarChange() {
+
+			if(only_open_start_launch_once_flag == 0)
+			{
+				console.log("only_open_start_launch_once_flag");
+				start_calibration_launch();
+				only_open_start_launch_once_flag = 99;
+			}
+			
+			if (calibration_lidar != 0 && once_close_lidar != 1) 							//更换雷达时，关闭上个点云
+			{
+				if (calibration_lidar == 1) {
+					pub_once_rs_bpe = 1;
+				}
+				else if (calibration_lidar == 2) {
+					pub_once_rs_livox = 1;
+				}
+				else if (calibration_lidar == 3) {
+					pub_once_rs_mid_back = 1;
+				}
+				else if (calibration_lidar == 4) {
+					pub_once_rs_lh_back = 1;
+				}
+				else if (calibration_lidar == 5) {
+					pub_once_rs_front_left = 1;
+				}
+				else if (calibration_lidar == 6) {
+					pub_once_rs_rear_right = 1;
+				}
+				once_close_lidar = 1;
+			}
+			var myselect = document.getElementById("lidar_selection");
+			var index = myselect.selectedIndex;
+			var value = myselect.options[index].value;
+			calibration_lidar = value;
+			console.log(calibration_lidar);
+                        console.log("============================");
+			if (calibration_lidar != 0) {
+				active_button();
+			}
+			calibrating_flag = 0;
+		}
+
+		function start_calibrate() {
+			confirm("是否开始校准？")
+			{
+				if (calibrating_flag == 0)                            //只能触发一次校准  还向校准的话，点击刷新
+				{
+					if (calibration_lidar == 1) {
+						pub_once_rs_bpe = 1;
+					}
+					else if (calibration_lidar == 2) {
+						pub_once_rs_livox = 1;
+					}
+					else if (calibration_lidar == 3) {
+						pub_once_rs_mid_back = 1;
+					}
+					else if (calibration_lidar == 4) {
+						pub_once_rs_lh_back = 1;
+					}
+					else if (calibration_lidar == 5) {
+						pub_once_rs_front_left = 1;
+					}
+					else if (calibration_lidar == 6) {
+						pub_once_rs_rear_right = 1;
+					}
+
+					start_calibrate_flag = calibration_lidar;
+					calibrating_flag = 1;
+					once_close_lidar = 0;
+				}
+				else {
+					alert("已经开始校准(如需重选请刷新页面)");
+				}
+			}
+		}
+
+		function start_calibrate_plus() {
+			if (confirm("你确定要打开校验文件吗？")) {
+				myFunction();
+			}
+		}
+
+
+		var xmlhttp;
+		function loadXMLDoc(url, cfunc) {
+			if (window.XMLHttpRequest) {// IE7+, Firefox, Chrome, Opera, Safari 代码
+				xmlhttp = new XMLHttpRequest();
+			}
+			else {// IE6, IE5 代码
+				xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+			}
+			xmlhttp.onreadystatechange = cfunc;
+			xmlhttp.open("GET", url, true);
+			xmlhttp.send();
+		}
+		function myFunction() {
+			request_tf_diary = 1;
+		}
+		//myFunction();sudo ssh -i server_id_rsa -p 22 root@192.168.100.34
+
+		window.onbeforeunload = onbeforeunload_handler;
+		//window.onunload = onunload_handler;  
+		function onbeforeunload_handler() {
+			//refresh_calibrate(); 
+			// alert("sssss");
+			if (calibration_lidar == 1)           // 想
+			{
+				pub_once_rs = 1;
+				pub_once_rs_bpe = 1;
+			}
+			else if (calibration_lidar == 2) {
+				pub_once_rs = 1;
+				pub_once_rs_livox = 1;
+			}
+			else if (calibration_lidar == 3) {
+				pub_once_rs = 1;
+				pub_once_rs_mid_back = 1;
+			}
+			else if (calibration_lidar == 4) {
+				pub_once_rs = 1;
+				pub_once_rs_lh_back = 1;
+			}
+			else if (calibration_lidar == 5) {
+				pub_once_rs = 1;
+				pub_once_rs_front_left = 1;
+			}
+			else if (calibration_lidar == 6) {
+				pub_once_rs = 1;
+				pub_once_rs_rear_right = 1;
+			}
+
+			//send_command(90);
+			close_calibration_node = 1;
+			var warning = "已经关闭校准程序?";
+			return warning;
+		}
+
+	</script>
+	<div id="container">
+		<!-- <select id="version_selection" onchange="versionChange()" disabled="disabled" style="height:40px">
+			<option value="0" selected="selected">请选择当前车子的版本</option>
+			<option value="1">阳光车 </option>
+			<option value="2">环卫车 1.0&1.1</option>
+			<option value="3">环卫车 1.2</option>
+			<option value="4" disabled>环卫车 2.0 </option>
+		</select> -->
+
+		<select id="lidar_selection" onchange="lidarChange()" disabled="disabled" style="height:40px">
+			<option id="front_lidar" value="1">前雷达</option>
+			<option id="back_lidar" value="2">后雷达</option>
+			<option id="mid_scan_lidar" value="3">中单线雷达</option>
+			<option id="back_scan_lidar" value="4">后单线雷达</option>
+			<option id="front_left_lidar" value="5">左前雷达</option>
+                        <option id="rear_right_lidar" value="6">右后雷达</option>
+			<option value="0" selected="selected">请选择需要校准雷达</option>
+		</select>
+
+		<button id="button_calibrate" onclick="start_calibrate()" disabled="disabled">&nbsp; 开始校准 &nbsp;</button>
+		<button id="button_calibrate_two" onclick="start_calibrate_plus()" disabled="disabled">&nbsp; 校验结果
+			&nbsp;</button>
+		<!-- <button id ="button_refresh" onclick="refresh_calibrate()" disabled="disabled"  >&nbsp; 刷新界面 &nbsp;</button> -->
+
+		<table width="10%" cellspacing="1" cellpadding="1" bgcolor=#D8D8D8 border="1" height="10"
+			style="position:absolute; left:5px; bottom:20px;">
+			<tr align="center">
+				<td width="10%" class="btbg font-center titfont" colspan="4">校准状态</td>
+			</tr>
+			<tr>
+				<td width="10%" class="btbg font-center titfont" rowspan="1">前雷达</td>
+				<td width="10%" class="btbg font-center titfont" rowspan="1">后雷达</td>
+				<td width="10%" class="btbg font-center titfont" rowspan="1">中单线雷达</td>
+				<td width="10%" class="btbg font-center titfont" rowspan="1">后单线雷 达</td>
+				<td width="10%" class="btbg font-center titfont" rowspan="1">前左雷达</td>
+				<td width="10%" class="btbg font-center titfont" rowspan="1">右后雷达</td>
+			</tr>
+			<tr>
+				<td id="front_lidar_result">未校准&nbsp;</td>
+				<td id="back_lidar_result">未校准&nbsp;</td>
+				<td id="mid_scan_lidar_result">未校准&nbsp;</td>
+				<td id="back_scan_lidar_result">未校准&nbsp;</td>
+				<td id="front_left_lidar_result">未校准&nbsp;</td>
+				<td id="rear_right_lidar_result">未校准&nbsp;</td>
+			</tr>
+
+		</table>
+
+		<button id="button_left" disabled="disabled" onclick="leftiew_FUNC()"
+			style="opacity:0.5;width:100px;height:35px;font-size:15px;position:absolute; right:20px; bottom:270px;">&nbsp;左视图&nbsp;</button>
+		<button id="button_front" disabled="disabled" onclick="foreview_FUNC()"
+			style="opacity:0.5;width:100px;height:35px;font-size:15px;position:absolute; right:20px; bottom:200px;">&nbsp;前视图&nbsp;</button>
+		<button id="button_verticle" disabled="disabled" onclick="verticleview_FUNC()"
+			style="opacity:0.5;width:100px;height:35px;font-size:15px;position:absolute; right:20px; bottom:130px;">&nbsp;俯视图&nbsp;</button>
+		<button id="button_undefined_view" disabled="disabled" onclick="messview_FUNC()"
+			style="opacity:0.5;width:100px;height:35px;font-size:15px;position:absolute; right:20px; bottom:60px;">&nbsp;--图&nbsp;</button>
+
+	</div>
+
+</body>
+
+</html>

@@ -1,0 +1,66 @@
+topic_state: #监听某些话题频率
+  - {
+      topic: "/cti/sensor/rslidar/PointCloud2",
+      type: "sensor_msgs::msg::PointCloud2",
+      name: "rslidar",
+      timeout: 1.1,
+      enable: true,
+      mul: 1
+  }
+  - {
+      topic: "/front_top_cam/image_raw",
+      type: "sensor_msgs::msg::Image",
+      name: "front_top_cam",
+      timeout: 1.1,
+      enable: true,
+      mul: 1,
+    }
+  - {
+      topic: "/robot_odom_4wd",
+      type: "nav_msgs::msg::Odometry",
+      name: "Odometry",
+      timeout: 1.1,
+      enable: true,
+      mul: 1,
+    }
+  - {
+      topic: "/livox/lidar/rear_right",
+      type: "sensor_msgs::msg::PointCloud2",
+      name: "rear_right",
+      timeout: 1.1,
+      enable: true,
+      mul: 1,
+    }
+  - {
+      topic: "/livox/lidar/front_left",
+      type: "sensor_msgs::msg::PointCloud2",
+      name: "front_left",
+      timeout: 1.1,
+      enable: true,
+      mul: 1,
+    }
+  - {
+      topic: "/livox/imu/front_left",
+      type: "sensor_msgs::msg::Imu",
+      name: "front_left_imu",
+      timeout: 1.1,
+      enable: true,
+      mul: 1,
+    }
+  - {
+      topic: "/livox/imu/rear_right",
+      type: "sensor_msgs::msg::Imu",
+      name: "rear_right_imu",
+      timeout: 1.1,
+      enable: true,
+      mul: 1,
+    }
+  # - {
+  #     topic: "/tf_static",
+  #     type: "tf2_msgs::msg::TFMessage",
+  #     name: "tf_static",
+  #     timeout: 1.1,
+  #     enable: true,
+  #     mul: 1,
+  #   }
+  

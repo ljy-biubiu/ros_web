@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script type="text/javascript"
+    src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script src="js/roslibjs/roslib.js"></script>
+  <script src="js/design/WEB_PARAM.js"></script>
+  <script src="js/design/code_tranlate.js"></script>
+  <script src="js/design/sensorToChinese.js"></script>
+  <script src="js/design/hardware_Err.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+
+
+
+  <script type="text/javascript" type="text/javascript">
+
+    var aa = window.localStorage.getItem('/home/ljy/dev/catkin_wx/src/cti_data_viewer/cti_www/www/license.js'); //读存储的数据
+    var aaObj = JSON.parse(aa); //将JSON字符串转化成JSON对象方便读取
+    var LICENSE= aaObj.license;
+    var IP_PORT= aaObj.ip_port;
+    
+    // Connecting to ROS
+    var ros = new ROSLIB.Ros({
+      url: IP_PORT
+    });
+
+    //判断是否连接成功并输出相应的提示消息到web控制台
+    ros.on('connection', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
+    });
+
+    ros.on('error', function (error) {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
+    });
+
+    ros.on('close', function () {
+      document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
+    });
+
+///////////////////////////////////////////////////////////////
+
+// // Subscribing to a Topic
+// var listener_base_pose = new ROSLIB.Topic({
+//         ros: ros,
+//         name: 'base_link_pose',
+//         messageType: 'geometry_msgs/PoseStamped'
+//     });
+
+//     listener_base_pose.subscribe(function (message) {
+//       //console.log(message);
+//       console.log("=====================");
+//       // document.getElementById("longitude").innerHTML = message.toFixed(3);
+//       // document.getElementById("latitude").innerHTML = jsonObj.latitude.toFixed(3);
+//       // document.getElementById("altitude").innerHTML = jsonObj.altitude.toFixed(3);
+//     });
+
+    var base_poes = new ROSLIB.Topic({
+      ros: ros,
+      name: '/base_link_pose',
+      messageType: 'geometry_msgs/PoseStamped'
+    });
+
+    base_poes.subscribe(function (message) {
+      //console.log( message.pose.position.x );
+      document.getElementById("ndt_x").innerHTML = message.pose.position.x.toFixed(3);
+      document.getElementById("ndt_y").innerHTML = message.pose.position.y.toFixed(3);
+      document.getElementById("ndt_z").innerHTML = message.pose.position.z.toFixed(3);
+    });
+
+
+    /////////////////////////////////////////////////////////imu
+
+
+// Subscribing to a Topic
+    var imu_msg = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/web/imu',
+      messageType: 'std_msgs/String'
+    });
+
+
+    imu_msg.subscribe(function (message) {
+      var obj_box_json = JSON.parse(message.data);
+      document.getElementById("pitch").innerHTML = obj_box_json.pitch.toFixed(2) + "°";
+      document.getElementById("roll").innerHTML = obj_box_json.roll.toFixed(2) + "°";
+      document.getElementById("yaw").innerHTML = obj_box_json.yaw.toFixed(2) + "°";
+    });
+
+
+
+    // Subscribing to a Topic    ///////////// resorce monitor
+    var cup_state  = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/monitor/resource_status',
+      messageType: 'diagnostic_msgs/DiagnosticArray'
+    });
+
+
+    cup_state.subscribe(function (message) {
+      console.log(message);
+      for (var i = 0; i < message.status.length; i++) 
+      {
+        var s1 = String(i);
+        var s2 = 'HN';
+        var s3 = 'HM';
+        document.getElementById(s2.concat(s1)).innerHTML = message.status[i].name.split(' ')[0]; 
+        document.getElementById(s3.concat(s1)).innerHTML = message.status[i].message.split(' ')[1]; 
+        if(message.status[i].name == "CPU Temp")
+        {
+          document.getElementById(s2.concat(s1)).innerHTML = message.status[i].name; 
+          document.getElementById(s3.concat(s1)).innerHTML = message.status[i].message.split(' ')[1]; 
+        }
+      }
+    });
+
+
+
+
+
+    // Subscribing to a Topic
+    // Subscribing to a Topic
+    var listener_robotconfig_sensorstate = new ROSLIB.Topic({
+      ros: ros,
+      name: 'cti/robot_config/sensorState_web',
+      messageType: 'std_msgs/String'
+    });
+
+    listener_robotconfig_sensorstate.subscribe(function (message) {
+
+      var obj_json = JSON.parse(message.data);
+
+      // document.getElementById("connect_status").innerHTML = obj_json[1].name;
+      for (var i = 0; i < obj_json.length; i++) {
+
+        var s1 = String(i);
+        var s2 = '_name';
+        var s3 = '_state';
+
+
+
+        for (var j = 0; j < sensor_name.length; j++) {
+          if (obj_json[i].name == sensor_name[j].code) {
+            document.getElementById(s1.concat(s2)).innerHTML = sensor_name[j].name;
+          }
+        }
+        for (var j = 0; j < sensor_status.length; j++) {
+          if (obj_json[i].statu == sensor_status[j].code) {
+            document.getElementById(s1.concat(s3)).innerHTML = sensor_status[j].name;
+          }
+        }
+
+        cur_name = " is normal"
+
+        aa = document.getElementById(s1.concat(s2));
+        bb = document.getElementById(s1.concat(s3));
+        aa.style.backgroundColor = "grap";/////////////////////////////////////////////////////////imu
+
+        bb.style.backgroundColor = "grap";
+
+        if (obj_json[i].statu != cur_name) {
+          aa = document.getElementById(s1.concat(s2));
+          bb = document.getElementById(s1.concat(s3));
+          aa.style.backgroundColor = "red";
+          bb.style.backgroundColor = "red";
+          //warn_msg.data = true;
+          send_err_show(true);
+        }
+
+      }
+    });
+    ////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+
+    // Subscribing to a Topic
+    var utl0 = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/ultrasonic/data_0',
+      messageType: 'std_msgs/Float32MultiArray'
+    });
+
+    utl0.subscribe(function (message) {
+      document.getElementById("ult_front").innerHTML = message.data[1].toFixed(2);
+      document.getElementById("ult_front_left").innerHTML = message.data[2].toFixed(2);
+      document.getElementById("ult_front_right").innerHTML = message.data[0].toFixed(2);
+    });
+    // Subscribing to a Topic
+    var utl1 = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/ultrasonic/data_2',
+      messageType: 'std_msgs/Float32MultiArray'
+    });
+
+    utl1.subscribe(function (message) {
+      document.getElementById("ult_left_up").innerHTML = message.data[0].toFixed(2);
+      document.getElementById("ult_left_down").innerHTML = message.data[1].toFixed(2);
+      document.getElementById("ult_right_up").innerHTML = message.data[2].toFixed(2);
+      document.getElementById("ult_right_down").innerHTML = message.data[3].toFixed(2);
+    });
+
+    
+    // Subscribing to a Topic
+    var utl2 = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/ultrasonic/data_1',
+      messageType: 'std_msgs/Float32MultiArray'
+    });
+
+    utl2.subscribe(function (message) {
+      document.getElementById("ult_back_leftleft").innerHTML = message.data[0].toFixed(2);
+      document.getElementById("ult_back_left").innerHTML = message.data[1].toFixed(2);
+      document.getElementById("ult_back_right").innerHTML = message.data[2].toFixed(2);
+      document.getElementById("ult_back_rightright").innerHTML = message.data[3].toFixed(2);
+    });
+
+
+
+    // Subscribing to a Topic
+    var node_live = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/monitor/node_alive',
+      messageType: 'diagnostic_msgs/DiagnosticArray' 
+    });
+
+    node_live.subscribe(function (message) {
+      for (var i = 0,j = 0; i <message.status.length ; i++) {
+        var s1 = String(j);
+        var s2 = '_name_sec';
+        var s3 = '_level_sec';
+        var s4 = '_message_sec'
+
+        if(message.status[i].level != 0)
+        {
+            j++;
+            document.getElementById(s1.concat(s2)).innerHTML = message.status[i].name;
+            document.getElementById(s1.concat(s3)).innerHTML = message.status[i].level;
+            document.getElementById(s1.concat(s4)).innerHTML = message.status[i].message.split('/').pop().trim();
+        }
+        aa=document.getElementById(s1.concat(s2));
+        bb=document.getElementById(s1.concat(s3));
+        cc=document.getElementById(s1.concat(s4));
+        aa.style.backgroundColor ="grap";
+        bb.style.backgroundColor ="grap";
+        cc.style.backgroundColor ="grap";
+
+        if(message.status[i].level != 0)
+        {
+          aa=document.getElementById(s1.concat(s2));
+          bb=document.getElementById(s1.concat(s3));
+          aa.style.backgroundColor ="red";
+          bb.style.backgroundColor ="red";
+          cc.style.backgroundColor ="red";
+        }
+      }
+    });
+
+              
+///////////////////////////////////////////////////////
+// Subscribing to a Topic
+    var bat_vihicle = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/web/vihicle_battery',
+      messageType: 'std_msgs/String'
+    });
+
+    bat_vihicle.subscribe(function (message) {
+      //console.log(message);
+
+      var obj_box_json = JSON.parse(message.data)
+      for (var j = 0; j < obj_box_json.length; j++) {
+        var s1 = String(j);
+        var s2 = '_bv_name';
+        var s3 = '_vol';
+        var s4 = '_soc';
+        document.getElementById(s1.concat(s2)).innerHTML = obj_box_json[j].name;
+        document.getElementById(s1.concat(s3)).innerHTML = obj_box_json[j].bat_volt.toFixed(3);
+        document.getElementById(s1.concat(s4)).innerHTML = obj_box_json[j].bat_soc;
+      }
+
+    });
+
+
+      // Subscribing to a Topic
+    var bat_box = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/web/dustbox_battery',
+      messageType: 'std_msgs/String'
+    });
+
+    bat_box.subscribe(function (message) {
+
+      var obj_box_json = JSON.parse(message.data)
+      for(var j = 0; j < obj_box_json.length; j++)
+      { 
+          var s1 = String(j);
+          var s2 = '_box_bv_name';
+          var s3 = '_box_vol';
+          var s4 = '_box_soc';
+          document.getElementById(s1.concat(s2)).innerHTML = obj_box_json[j].name;
+          document.getElementById(s1.concat(s3)).innerHTML = obj_box_json[j].bat_volt.toFixed(3);
+          document.getElementById(s1.concat(s4)).innerHTML = obj_box_json[j].bat_soc;
+      }
+
+      });
+
+
+      // Subscribing to a Topic
+      var listener = new ROSLIB.Topic({
+        ros: ros,
+        name: '/cti/rosweb/state',
+        messageType: 'std_msgs/String'
+      });
+
+      listener.subscribe(function (message) {
+        var jsonObj = window.JSON.parse(message.data);
+        document.getElementById("longitude").innerHTML = jsonObj.longitude.toFixed(3);
+        document.getElementById("latitude").innerHTML = jsonObj.latitude.toFixed(3);
+        document.getElementById("altitude").innerHTML = jsonObj.altitude.toFixed(3);
+
+      });
+
+       // Subscribing to a Topic
+       var operationControlVersion_sub = new ROSLIB.Topic({
+        ros: ros,
+        name: '/cti/fpga_serial/operationControlVersion',
+        messageType: 'cti_msgs/RobotVersionDisplay'
+      });
+
+      operationControlVersion_sub.subscribe(function (message) {
+
+        document.getElementById("navVersion").innerHTML = message.navVersion;
+        document.getElementById("mapVersion").innerHTML = message.mapVersion;
+        document.getElementById("hardwareVersion").innerHTML = message.hardwareVersion;
+
+        document.getElementById("operationControlVersion").innerHTML = message.operationControlVersion;
+        document.getElementById("leftFrontDiverVersion").innerHTML = message.leftFrontDiverVersion;
+        document.getElementById("rightFrontDiverVersion").innerHTML = message.rightFrontDiverVersion;
+
+        document.getElementById("leftBackDiverVersion").innerHTML = message.leftBackDiverVersion;
+        document.getElementById("rightBackDiverVersion").innerHTML = message.rightBackDiverVersion;
+        document.getElementById("frontBrakeDiverVersion").innerHTML = message.frontBrakeDiverVersion;
+
+        document.getElementById("backBrakeDiverVersion").innerHTML = message.backBrakeDiverVersion;
+        document.getElementById("forwardSwayDiverVersion").innerHTML = message.forwardSwayDiverVersion;
+        document.getElementById("backwardSwayDiverVersion").innerHTML = message.backwardSwayDiverVersion;
+
+        document.getElementById("lightControlVersion").innerHTML = message.lightControlVersion;
+        document.getElementById("batteryTandemVersion").innerHTML = message.batteryTandemVersion;
+        document.getElementById("debugInterfaceVersion").innerHTML = message.debugInterfaceVersion;
+
+        document.getElementById("ultrasonicVersion").innerHTML = message.ultrasonicVersion; 
+
+      });
+
+
+
+
+    // Subscribing to a Topic
+    var chassis_error = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cti/chassis_serial/chassis_error',
+      messageType: 'std_msgs/UInt32MultiArray' 
+    });
+
+    var cur_data = [];                         //开辟一个数组
+    var count = 10;
+
+    chassis_error.subscribe(function (message) {
+      count--;
+      if(count==0)
+      {
+
+        for(var z = 0;z < hardware_err.length; z++)
+        {
+          if ( hardware_err[z].numb == message.data[0] && hardware_err[z].code == message.data[1] )
+          {
+            if(cur_data.length == 0)
+            {
+              cur_data.push({
+                  "numb" : hardware_err[z].numb,
+                  "name" : hardware_err[z].name,
+                  "code": hardware_err[z].code,
+                  "msg": hardware_err[z].msg
+                });
+            }
+            else
+            {
+              for(var c = 0 ;c<cur_data.length;c++)
+              {
+                if(cur_data[c].numb == message.data[0] && cur_data[c].code == message.data[1]){}
+                else
+                { 
+                  if(cur_data.length >6)
+                  {
+                    cur_data.shift();
+                  }
+                  else
+                  {
+                    cur_data.push({
+                    "numb" : hardware_err[z].numb,
+                    "name" : hardware_err[z].name,
+                    "code": hardware_err[z].code,
+                    "msg": hardware_err[z].msg
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        for(var j = 0 ;j < cur_data.length; j++)
+        {
+          var s1 = String(j);
+          var s2 = '_name_hardware';
+          var s3 = '_code_hardware';
+          var s4 = '_message_hardware';
+          document.getElementById(s1.concat(s2)).innerHTML = cur_data[j].name;
+          document.getElementById(s1.concat(s3)).innerHTML = cur_data[j].code.toString(16);
+          document.getElementById(s1.concat(s4)).innerHTML = cur_data[j].msg;
+        }
+        count = 10;
+      } 
+      });
+
+
+
+
+
+  </script>
+
+<body>
+
+  <ul>
+    <strong>
+      <li><a class="title_left" href="#home">车辆状态</a></li>
+      <li><a class="title_left" href="lidar_GB2.html">导航状态</a></li>
+      <li><a class="title_left" href="equitment_GB2.html">底盘状态</a></li>
+      <li><a class="title_left" href="diary_GB2.html">错误日志</a></li>
+      <li><a class="title_left" href="tool _GB2.html">其他工具</a></li>
+    </strong>
+  </ul>
+
+  <div style="margin-left:20%;padding:1px 16px;height:1000px;" >
+    <div class="srv_state">
+      <p id="connect_status">服务器状态（未响应）</p>
+    </div>
+    <title>阳光无人车</title>
+    <h1 id="license">阳光无人车</h1>
+    <!-- <h4 id="blink">闪烁的文字</h4> -->
+
+
+    <script>
+      LICENSE = '阳光无人车-' + LICENSE;
+      document.getElementById("license").innerHTML = LICENSE;
+    </script>
+    
+    <br /><br /><br />
+    <h3>雷达/陀螺仪状态:</h3>
+  
+    <table width="80%" cellspacing="1" cellpadding="9" bgcolor= #D8D8D8 border="1" align="center" height="100">
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">话题</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">状态</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">话题</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">状态</td>
+      </tr>
+      <tr>
+
+      </tr>
+      <tr>
+        <td id="0_name">NULL&nbsp;</td>
+        <td id="0_state">NULL&nbsp;</td>
+        <td id="1_name">NULL&nbsp;</td>
+        <td id="1_state">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="2_name">NULL&nbsp;</td>
+        <td id="2_state">NULL&nbsp;</td>
+        <td id="3_name">NULL&nbsp;</td>
+        <td id="3_state">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="4_name">NULL&nbsp;</td>
+        <td id="4_state">NULL&nbsp;</td>
+        <td id="5_name">NULL&nbsp;</td>
+        <td id="5_state">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="6_name">NULL&nbsp;</td>
+        <td id="6_state">NULL&nbsp;</td>
+        <td id="7_name">NULL&nbsp;</td>
+        <td id="7_state">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="8_name">NULL&nbsp;</td>
+        <td id="8_state">NULL&nbsp;</td>
+        <td id="9_name">NULL&nbsp;</td>
+        <td id="9_state">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="10_name">NULL&nbsp;</td>
+        <td id="10_state">NULL&nbsp;</td>
+        <td id="11_name">NULL&nbsp;</td>
+        <td id="11_state">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="12_name">NULL&nbsp;</td>
+        <td id="12_state">NULL&nbsp;</td>
+        <td id="13_name">NULL&nbsp;</td>
+        <td id="13_state">NULL&nbsp;</td>
+      </tr>
+      <!-- <tr>
+        <td id="14_name">NULL&nbsp;</td>
+        <td id="14_state">NULL&nbsp;</td>
+        <td id="15_name">NULL&nbsp;</td>
+        <td id="15_state">NULL&nbsp;</td>
+      </tr> -->
+
+    </table>
+
+    <br /><br /><br />
+    <h3>超声波状态:</h3>
+    <table width="80%" cellspacing="1" cellpadding="9" bgcolor= #D8D8D8 align="center" border="1"  height="100">
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">超声波</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">状态</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">超声波</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">状态</td>
+      </tr>
+      <tr>
+  
+      </tr>
+      <tr>
+        <td >车前-正中超声波:&nbsp;</td>
+        <td id="ult_front">NULL&nbsp;</td>
+        <td >车前-左超声波:&nbsp;</td>
+        <td id="ult_front_left">NULL&nbsp;</td>
+      </tr>
+  
+      <tr>
+        <td >车前-右超声波:&nbsp;</td>
+        <td id="ult_front_right">NULL&nbsp;</td>
+        <td >车左-上超声波:&nbsp;</td>
+        <td id="ult_left_up">NULL&nbsp;</td>
+      </tr>
+
+      <tr>
+        <td >车左-下超声波:&nbsp;</td>
+        <td id="ult_left_down">NULL&nbsp;</td>
+        <td >车右-上超声波:&nbsp;</td>
+        <td id="ult_right_up">NULL&nbsp;</td>
+      </tr>
+      
+      <tr>
+        <td >车右-下超声波:&nbsp;</td>
+        <td id="ult_right_down">NULL&nbsp;</td>
+        <td >车后-左左超声波:&nbsp;</td>
+        <td id="ult_back_leftleft">NULL&nbsp;</td>
+      </tr>
+      
+      <tr>
+        <td >车后-左超声波:&nbsp;</td>
+        <td id="ult_back_left">NULL&nbsp;</td>
+        <td >车后-右超声波:&nbsp;</td>
+        <td id="ult_back_right">NULL&nbsp;</td>
+      </tr>
+
+      <tr>
+        <td >车后-右右超声波:&nbsp;</td>
+        <td id="ult_back_rightright">NULL&nbsp;</td>
+        <td >NULL&nbsp;</td>
+        <td >NULL&nbsp;</td>
+      </tr>
+  
+    </table>
+
+    
+    
+    
+    <br /><br /><br />
+    <h3>资源监控:</h3>
+    <table width="80%" cellspacing="1" cellpadding="9" bgcolor= #D8D8D8 align="center" border="1"  height="100">
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">硬件</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">状态</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">硬件</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">状态</td>
+      </tr>
+      <tr>
+  
+      </tr>
+      <tr>
+        <td id="HN0">NULL:&nbsp;</td>
+        <td id="HM0">NULL:&nbsp;</td>
+        <td id="HN1">NULL&nbsp;</td>
+        <td id="HM1">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="HN2">NULL:&nbsp;</td>
+        <td id="HM2">NULL:&nbsp;</td>
+        <td id="HN3">NULL&nbsp;</td>
+        <td id="HM3">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="HN4">NULL:&nbsp;</td>
+        <td id="HM4">NULL:&nbsp;</td>
+        <td id="HN5">NULL&nbsp;</td>
+        <td id="HM5">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="HN6">NULL:&nbsp;</td>
+        <td id="HM6">NULL:&nbsp;</td>
+        <td id="HN7">NULL&nbsp;</td>
+        <td id="HM7">NULL&nbsp;</td>
+      </tr>
+      <tr>
+        <td id="HN8">NULL:&nbsp;</td>
+        <td id="HM8">NULL:&nbsp;</td>
+        <td id="HN9">NULL&nbsp;</td>
+        <td id="HM9">NULL&nbsp;</td>
+      </tr>
+
+    </table>
+    
+    
+    
+    
+      
+    
+    
+    
+    <br /><br /><br />
+    <h3>IMU姿态:</h3>
+    <table width="80%" cellspacing="1" cellpadding="9" bgcolor= #D8D8D8 align="center" border="1"  height="100">
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">Yaw（偏航）</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">Pitch（俯仰）</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">Roll（翻滚）</td>
+      </tr>
+      <tr>
+  
+      </tr>
+      <tr>
+        <td id="yaw">NULL:&nbsp;</td>
+        <td id="pitch">NULL:&nbsp;</td>
+        <td id="roll">NULL&nbsp;</td>
+      </tr>
+
+    </table>
+
+
+    <br />
+    <h3>GPS位置:</h3>
+    <table width="80%" cellspacing="1" cellpadding="9" bgcolor= #D8D8D8 align="center" border="1"  height="100">
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">经度</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">维度</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">高度</td>
+      </tr>
+      <tr>
+  
+      </tr>
+      <tr>
+        <td id="longitude">NULL:&nbsp;</td>
+        <td id="latitude">NULL:&nbsp;</td>
+        <td id="altitude">NULL&nbsp;</td>
+      </tr>
+
+    </table>
+
+
+
+    <br /><br /><br />
+    <h3>地图位置:</h3>
+    <table width="80%" cellspacing="1" cellpadding="9" bgcolor= #D8D8D8 align="center" border="1"  height="100">
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">X</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">Y</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">Z</td>
+      </tr>
+      <tr>
+  
+      </tr>
+      <tr>
+        <td id="ndt_x">NULL:&nbsp;</td>
+        <td id="ndt_y">NULL:&nbsp;</td>
+        <td id="ndt_z">NULL&nbsp;</td>
+      </tr>
+
+    </table>
+  <!-- </table>
+  <br /><br /><br />
+  <h3>平台指令:</h3>
+  <table width="80%" cellspacing="1" cellpadding="9" bgcolor= #D8D8D8 align="center" border="1"  height="100"  style="font-size:14px">
+    <tr>
+      <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">指令类型</td>
+      <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">指令状态</td>
+      <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">错误码</td>
+      <td width="15%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">错误信息</td>
+    </tr>
+    <tr>
+
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="cloud_command_type">NULL&nbsp;</td>
+        <td id="cloud_command_state">NULL&nbsp;</td>
+        <td id="cloud_code">NULL&nbsp;</td>
+        <td id="cloud_message">NULL&nbsp;</td>
+      </tr>
+    </tr>
+  </table>
+  <br /><br /><br /> -->
+
+
+  </table>
+  <br />
+  <h3>底盘电池状态:</h3>
+  <table width="80%" cellspacing="1" cellpadding="9" bgcolor= #D8D8D8 align="center" border="1"  height="100"  style="font-size:14px">
+    <tr>
+      <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">序号</td>
+      <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">电压</td>
+      <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">电量</td>
+    </tr>
+    <tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="0_bv_name">NULL&nbsp;</td>
+        <td id="0_vol">NULL&nbsp;</td>
+        <td id="0_soc">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="1_bv_name">NULL&nbsp;</td>
+        <td id="1_vol">NULL&nbsp;</td>
+        <td id="1_soc">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="2_bv_name">NULL&nbsp;</td>
+        <td id="2_vol">NULL&nbsp;</td>
+        <td id="2_soc">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="3_bv_name">NULL&nbsp;</td>
+        <td id="3_vol">NULL&nbsp;</td>
+        <td id="3_soc">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="4_bv_name">NULL&nbsp;</td>
+        <td id="4_vol">NULL&nbsp;</td>
+        <td id="4_soc">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+  </table>
+  <br />
+
+</table>
+<br />
+<h3>箱子电池状态:</h3>
+<table width="80%" cellspacing="1" cellpadding="9" bgcolor= #D8D8D8 align="center" border="1"  height="100"  style="font-size:14px">
+  <tr>
+    <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">序号</td>
+    <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">电压</td>
+    <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">电量</td>
+  </tr>
+  <tr>
+  </tr>
+
+
+  <tr>
+    <tr>
+      <td id="0_box_bv_name">NULL&nbsp;</td>
+      <td id="0_box_vol">NULL&nbsp;</td>
+      <td id="0_box_soc">NULL&nbsp;</td>
+    </tr>
+  </tr>
+
+  <tr>
+    <tr>
+      <td id="1_box_bv_name">NULL&nbsp;</td>
+      <td id="1_box_vol">NULL&nbsp;</td>
+      <td id="1_box_soc">NULL&nbsp;</td>
+    </tr>
+  </tr>
+
+  <tr>
+    <tr>
+      <td id="2_box_bv_name">NULL&nbsp;</td>
+      <td id="2_box_vol">NULL&nbsp;</td>
+      <td id="2_box_soc">NULL&nbsp;</td>
+    </tr>
+  </tr>
+
+  <tr>
+    <tr>
+      <td id="3_box_bv_name">NULL&nbsp;</td>
+      <td id="3_box_vol">NULL&nbsp;</td>
+      <td id="3_box_soc">NULL&nbsp;</td>
+    </tr>
+  </tr>
+
+  <tr>
+    <tr>
+      <td id="4_box_bv_name">NULL&nbsp;</td>
+      <td id="4_box_vol">NULL&nbsp;</td>
+      <td id="4_box_soc">NULL&nbsp;</td>
+    </tr>
+  </tr>
+
+</table>
+<br />
+
+
+
+  </table>
+  <br />
+  <h3>异常节点:</h3>
+  <table width="80%" cellspacing="1" cellpadding="9" bgcolor= #D8D8D8 align="center" border="1"  height="100"  style="font-size:14px">
+    <tr>
+      <td width="10%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">话题</td>
+      <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">状态</td>
+      <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">信息</td>
+    </tr>
+    <tr>
+
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="0_name_sec">NULL&nbsp;</td>
+        <td id="0_level_sec">NULL&nbsp;</td>
+        <td id="0_message_sec">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="1_name_sec">NULL&nbsp;</td>
+        <td id="1_level_sec">NULL&nbsp;</td>
+        <td id="1_message_sec">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="2_name_sec">NULL&nbsp;</td>
+        <td id="2_level_sec">NULL&nbsp;</td>
+        <td id="2_message_sec">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="3_name_sec">NULL&nbsp;</td>
+        <td id="3_level_sec">NULL&nbsp;</td>
+        <td id="3_message_sec">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="4_name_sec">NULL&nbsp;</td>
+        <td id="4_level_sec">NULL&nbsp;</td>
+        <td id="4_message_sec">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="5_name_sec">NULL&nbsp;</td>
+        <td id="5_level_sec">NULL&nbsp;</td>
+        <td id="5_message_sec">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="6_name_sec">NULL&nbsp;</td>
+        <td id="6_level_sec">NULL&nbsp;</td>
+        <td id="6_message_sec">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="7_name_sec">NULL&nbsp;</td>
+        <td id="7_level_sec">NULL&nbsp;</td>
+        <td id="7_message_sec">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="8_name_sec">NULL&nbsp;</td>
+        <td id="8_level_sec">NULL&nbsp;</td>
+        <td id="8_message_sec">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="9_name_sec">NULL&nbsp;</td>
+        <td id="9_level_sec">NULL&nbsp;</td>
+        <td id="9_message_sec">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+  </table>
+
+
+
+
+  <br />
+  <h3>硬件异常:</h3>
+  <table width="80%" cellspacing="1" cellpadding="9" bgcolor= #D8D8D8 align="center" border="1"  height="100"  style="font-size:14px">
+    <tr>
+      <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">模块</td>
+      <td width="10%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">错误码</td>
+      <td width="10%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">信息</td>
+    </tr>
+
+    <tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="0_name_hardware">NULL&nbsp;</td>
+        <td id="0_code_hardware">NULL&nbsp;</td>
+        <td id="0_message_hardware">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="1_name_hardware">NULL&nbsp;</td>
+        <td id="1_code_hardware">NULL&nbsp;</td>
+        <td id="1_message_hardware">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="2_name_hardware">NULL&nbsp;</td>
+        <td id="2_code_hardware">NULL&nbsp;</td>
+        <td id="2_message_hardware">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="3_name_hardware">NULL&nbsp;</td>
+        <td id="3_code_hardware">NULL&nbsp;</td>
+        <td id="3_message_hardware">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="4_name_hardware">NULL&nbsp;</td>
+        <td id="4_code_hardware">NULL&nbsp;</td>
+        <td id="4_message_hardware">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="5_name_hardware">NULL&nbsp;</td>
+        <td id="5_code_hardware">NULL&nbsp;</td>
+        <td id="5_message_hardware">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+    <tr>
+      <tr>
+        <td id="6_name_hardware">NULL&nbsp;</td>
+        <td id="6_code_hardware">NULL&nbsp;</td>
+        <td id="6_message_hardware">NULL&nbsp;</td>
+      </tr>
+    </tr>
+
+  </table>
+
+
+
+  <br />
+<h3>版本信息:</h3>
+<table width="80%" cellspacing="1" cellpadding="9" bgcolor= #D8D8D8 align="center" border="1"  height="100"  style="font-size:14px">
+  <tr>
+    <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">内容</td>
+    <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">版本</td>
+    <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">内容</td>
+    <td width="5%" class="btbg font-center titfont" rowspan="1"style="font-size:24px">版本</td>
+  </tr>
+  <tr>
+  </tr>
+
+
+  <tr>
+    <tr>
+      <td >导航版本&nbsp;</td>
+      <td id="navVersion">NULL&nbsp;</td>
+      <td >地图版本&nbsp;</td>
+      <td id="mapVersion">NULL&nbsp;</td>
+    </tr>
+  </tr>
+
+  <tr>
+    <tr>
+      <td>硬件版本&nbsp;</td>
+      <td id="hardwareVersion">NULL&nbsp;</td>
+      <td>运控版本&nbsp;</td>
+      <td id="operationControlVersion">NULL&nbsp;</td>
+    </tr>
+  </tr>
+
+  <tr>
+    <tr>
+      <td>左前驱动版本&nbsp;</td>
+      <td id="leftFrontDiverVersion">NULL&nbsp;</td>
+      <td>右前驱动版本&nbsp;</td>
+      <td id="rightFrontDiverVersion">NULL&nbsp;</td>
+    </tr>
+  </tr>
+
+  <tr>
+    <tr>
+      <td>左后驱动版本&nbsp;</td>
+      <td id="leftBackDiverVersion">NULL&nbsp;</td>
+      <td>右后驱动版本&nbsp;</td>
+      <td id="rightBackDiverVersion">NULL&nbsp;</td>
+    </tr>
+  </tr>
+
+  <tr>
+    <tr>
+      <td>前刹车驱动版本&nbsp;</td>
+      <td id="frontBrakeDiverVersion">NULL&nbsp;</td>
+      <td>后刹车驱动版本&nbsp;</td>
+      <td id="backBrakeDiverVersion">NULL&nbsp;</td>
+    </tr>
+  </tr>
+
+  <tr>
+    <tr>
+      <td>前转向版本&nbsp;</td>
+      <td id="forwardSwayDiverVersion">NULL&nbsp;</td>
+      <td>后转向版本&nbsp;</td>
+      <td id="backwardSwayDiverVersion">NULL&nbsp;</td>
+    </tr>
+  </tr>
+
+  <tr>
+    <tr>
+      <td>灯控版本&nbsp;</td>
+      <td id="lightControlVersion">NULL&nbsp;</td>
+      <td>电池版本&nbsp;</td>
+      <td id="batteryTandemVersion">NULL&nbsp;</td>
+    </tr>
+  </tr>
+
+  <tr>
+    <tr>
+      <td>交互界面版本&nbsp;</td>
+      <td id="debugInterfaceVersion">NULL&nbsp;</td>
+      <td>超声波版本&nbsp;</td>
+      <td id="ultrasonicVersion">NULL&nbsp;</td>
+    </tr>
+  </tr>
+
+
+
+</table>
+<br />
+  <br /><br /><br />
+    <!-- <img src="image/002.png" class="icon" width="400px" height="350px" style="z-index: -1;"/> -->
+  </div>
+    
+</body>
+
+</html>

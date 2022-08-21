@@ -1,22 +1,10 @@
 <launch>
-    <!-- <arg name="gpsTopic" value="/cti/sensing/gnss/pos_cti" /> -->
-    <arg name="gpsTopic" value="/cti/chassis_serial/gnss" />
-    <arg name="pcTopic" value="/lslam/mapping/map_local" />
-    <arg name="lidarTopic" value="/cti/semantics/object_map/test_costmap" />
-    <arg name="mapToPng_encodebase64_topic" value="/cti/cti_mapsample/mapToPng_encodebase64_topic" />
-    <arg name="rosweb_cmd_lidar" value="/cti/rosweb/cmd_lidar" />
-    <arg name="web_tf_pub_topic" value="/cti/rosweb/pub_web_tf" />
-    <arg name="pub_web_tf_msg_topic" value="/cti/rosweb/pub_web_tf_msg" />
-    <arg name="ndt_pose_topic" value="/ndt_pose" />
-    
-    <!-- name: '/cti/rosweb/cmd_lidar',
-    messageType: 'std_msgs/Int32' -->
 
     <arg name="startMappingCmd" value="$(find lslam)/script/startMapping" />
     <arg name="stopMappingCmd" value="$(find lslam)/script/stopMapping" />
-    <arg name="lidar_png_out_path" value="$(find ctiwww)/www/image/" />
+    <!-- <arg name="lidar_png_out_path" value="$(find ctiwww)/www/image/" /> -->
     <arg name="shutdown_nowCmd_path" value="/home/neousys/cti-launch/boot_sh/" />
-    <arg name="extract_Pointdata_Cmd_path" value="/home/neousys/cti-launch/boot_sh/" />
+    <!-- <arg name="extract_Pointdata_Cmd_path" value="/home/neousys/cti-launch/boot_sh/" /> -->
 
 
     <node pkg="cti_mapsample" type="cti_mapsample" name="cti_mapsample_node" output="screen">

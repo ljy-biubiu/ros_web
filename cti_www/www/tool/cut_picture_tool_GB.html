@@ -25,39 +25,17 @@
       url: IP_PORT
     });
     
-    var color = '#99bebe ';
-    var style;
-
-    function createStyle() {
-      style = document.createElement('style');
-      style.type = 'text/css';
-    }
-    function changeBackgroundColor() {
-      if (!style.parentNode) document.head.appendChild(style);
-    }
-    function changeColor() {
-      var color = "yellow|green|blue";
-      color = color.split("|");
-      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
-    }
-    setInterval("changeColor()", 500);
-    createStyle();
-    changeBackgroundColor();
-
     //判断是否连接成功并输出相应的提示消息到web控制台
     ros.on('connection', function () {
       document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
-      style.innerHTML = 'body {background-color: #bebfc0 ;}';
     });
 
     ros.on('error', function (error) {
       document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
-      style.innerHTML = 'body {background-color: #4f5257  ;}';
     });
 
     ros.on('close', function () {
       document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
-      style.innerHTML = 'body {background-color: #4f5257  ;}';
     });
 
     // Publishing a Topic

@@ -8,7 +8,6 @@
     src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
   <script src="js/roslibjs/roslib.js"></script>
   <script src="js/design/WEB_PARAM.js"></script>
-  <script src="js/design/project_name.js"></script>
   <script src="js/design/CodeToNavigation.js"></script>
   <script src="js/design/project_name.js"></script>
   <script src="js/design/BOX_message.js"></script>
@@ -24,53 +23,112 @@
       url: IP_PORT
     });
 
-    var color = '#99bebe ';
-    var style;
-
-    function createStyle() {
-      style = document.createElement('style');
-      style.type = 'text/css';
-    }
-    function changeBackgroundColor() {
-      if (!style.parentNode) document.head.appendChild(style);
-    }
-    createStyle();
-    changeBackgroundColor();
-    
-    function changeColor() {
-      var color = "yellow|green|blue";
-      color = color.split("|");
-      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
-    }
-
     //判断是否连接成功并输出相应的提示消息到web控制台
     ros.on('connection', function () {
       document.getElementById("connect_status").innerHTML = ('服务器状态（正常）');
-      style.innerHTML = 'body {background-color: #bebfc0 ;}';
     });
 
     ros.on('error', function (error) {
       document.getElementById("connect_status").innerHTML = ('服务器状态（错误）');
-      style.innerHTML = 'body {background-color: #4f5257  ;}';
     });
 
     ros.on('close', function () {
       document.getElementById("connect_status").innerHTML = ('服务器状态（关闭）');
-      style.innerHTML = 'body {background-color: #4f5257  ;}';
-      alert("服务器连接中断，请检查wifi状态，并刷新当前页面");
     });
 
+    function dec2bin(dec) {
+      return (dec >>> 0).toString(2);
+    }
 
 
-    // function changeColor() {
-    //   var color = "yellow|green|blue";
-    //   color = color.split("|");
-    //   document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
-    // }
+    console.log("test");
 
-    // setInterval("changeColor()", 500);
+
+    if (parseInt(message.data & (1 << 6)) != 0) {
+      console.log("前上摄像头内参已标定");
+      document.getElementById("front_inter_result").innerHTML = "已校准";
+    }
+    if (parseInt(message.data & (1 << 7)) != 0) {
+      console.log("后上摄像头内参已标定");
+      document.getElementById("back_down_inter_result").innerHTML = "已校准";
+    }
+    if (parseInt(message.data & (1 << 8)) != 0) {
+      console.log("后下摄像头内参已标定");
+      document.getElementById("back_inter_lidar_result").innerHTML = "已校准";
+    }
+
+    if (parseInt(message.data & (1 << 15)) != 0) {
+      console.log("空闲，前上摄像头雷达已标定（外参）");
+      document.getElementById("front_outer_result").innerHTML = "已校准";
+    }
+    if (parseInt(message.data & (1 << 16)) != 0) {
+      console.log("空闲，前下摄像头雷达已标定（外参）");
+      document.getElementById("back_down_outer_result").innerHTML = "已校准";
+    }
+    if (parseInt(message.data & (1 << 17)) != 0) {
+      console.log("空闲，后摄像头雷达已标定（外参）");
+      document.getElementById("back_outer_lidar_result").innerHTML = "已校准";
+    }
+
+
+
+    if (parseInt(message.data & (1 << 0)) != 0) {
+      console.log("前上摄像头数据收集中");
+    } else if (parseInt(message.data & (1 << 1)) != 0) {
+      console.log("前下摄像头数据收集中");
+    } else if (parseInt(message.data & (1 << 2)) != 0) {
+      console.log("后摄像头数据收集中");
+    } else if (parseInt(message.data & (1 << 3)) != 0) {
+      console.log("前上摄像头标定计算中");
+    } else if (parseInt(message.data & (1 << 4)) != 0) {
+      console.log("前下摄像头标定计算中");
+    } else if (parseInt(message.data & (1 << 5)) != 0) {
+      console.log("后摄像头标定计算中");
+    } else if (parseInt(message.data & (1 << 9)) != 0) {
+      console.log("前上摄像头雷达数据收集中");
+    } else if (parseInt(message.data & (1 << 10)) != 0) {
+      console.log("前下摄像头雷达数据收集中");
+    } else if (parseInt(message.data & (1 << 11)) != 0) {
+      console.log("后摄像头雷达数据收集中");
+    } else if (parseInt(message.data & (1 << 12)) != 0) {
+      console.log("前上摄像头雷达标定计算中");
+    } else if (parseInt(message.data & (1 << 13)) != 0) {
+      console.log("前下摄像头雷达标定计算中");
+    } else if (parseInt(message.data & (1 << 14)) != 0) {
+      console.log("后摄像头雷达标定计算中");
+    }
+
+    <table width="10%" cellspacing="1" cellpadding="1" bgcolor=#D8D8D8 border="1" height="10"
+      style="position:absolute; left:5px; bottom:20px;">
+      <tr align="center">
+        <td width="10%" class="btbg font-center titfont" colspan="4">校准状态</td>
+      </tr>
+      <tr>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">前上摄像头内参</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">前下摄像头内参</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">后摄像头内参</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">前上摄像头（外参）</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">前下摄像头（外参）</td>
+        <td width="10%" class="btbg font-center titfont" rowspan="1">后摄像头（外参）</td>
+      </tr>
+      <tr>
+        <td id="front_inter_result">未校准&nbsp;</td>
+        <td id="back_down_inter_result">未校准&nbsp;</td>
+        <td id="back_inter_lidar_result">未校准&nbsp;</td>
+        <td id="front_outer_result">未校准&nbsp;</td>
+        <td id="back_down_outer_result">未校准&nbsp;</td>
+        <td id="back_outer_lidar_result">未校准&nbsp;</td>
+      </tr>
+
+    </table>
+
+
+
+    console.log("test2");
 
     ///////////////////////////////////////////////////////
+
+
 
     // Subscribing to a Topic
     var box_movable_msg = new ROSLIB.Topic({
@@ -81,12 +139,11 @@
 
 
     box_movable_msg.subscribe(function (message) {
-
       document.getElementById("BOX_state").innerHTML = message.header.frame_id;
-
     });
 
     ///////////////////////////////////////////////////////
+
 
     // Subscribing to a Topic
     var listener_ = new ROSLIB.Topic({
@@ -101,6 +158,7 @@
       ima.src = message.data
 
     });
+
     ///////////////////////////////////////////////////////前方施工
     // Publishing a Topic
     var cmd_pub = new ROSLIB.Topic({
@@ -119,12 +177,12 @@
 
     function turn_to_coordination_model() {
       send_command(1);         //请求初始地图
-      window.location.href = "lidar _coordination.html"
+      window.location.href = "lidar _coordination_GB.html"
     }
 
     send_command(0);         //请求初始地图
 
-    //////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////
 
     // Subscribing to a Topic
     var listener_led_navi_code = new ROSLIB.Topic({
@@ -137,16 +195,15 @@
       for (var i = 0; i < json2.length; i++) {
         if (json2[i].code == message.data) {
           document.getElementById("blink").innerHTML = json2[i].msg;
+          console.log("----------22-----------");
         }
       }
-    });
+      //console.log(message.data);
+      // console.log()
+      // document.getElementById(s1.concat(s2)).innerHTML = message.status[i].name;
 
-    console.log("------------------------");
-    console.log("------------------------");
-    console.log("------------------------");
-    console.log("------------------------");
-    console.log("------------------------");
-    console.log(json2.length);
+
+    });
 
     // Subscribing to a Topic  project
     var listener_project = new ROSLIB.Topic({
@@ -182,61 +239,6 @@
       document.getElementById("odometer").innerHTML = message.odometer.toFixed(3);
     });
 
-
-    // Subscribing to a Topic
-    var box_msg = new ROSLIB.Topic({
-      ros: ros,
-      name: 'cti/web/box_msg',
-      messageType: 'std_msgs/String'
-    });
-
-
-    box_msg.subscribe(function (message) {
-      var obj_box_json = JSON.parse(message.data)
-      for (var i = 0; i < obj_box_json.length; i++) {
-        var s1 = String(i);
-        var s2 = '_qr';
-        var s3 = '_hive_type';
-        var s4 = '_hive_device_type'
-        var s5 = '_position'
-        document.getElementById(s1.concat(s2)).innerHTML = obj_box_json[i].qr;
-        document.getElementById(s1.concat(s5)).innerHTML = obj_box_json[i].position;
-        for (var j = 0; j < box_type.length; j++) {
-          if (obj_box_json[i].hive_type == box_type[j].code) {
-            document.getElementById(s1.concat(s3)).innerHTML = box_type[j].name;
-          }
-        }
-        for (var j = 0; j < device_type.length; j++) {
-          if (obj_box_json[i].hive_device_type == device_type[j].code) {
-            document.getElementById(s1.concat(s4)).innerHTML = device_type[j].name;
-          }
-        }
-      }
-    });
-
-    //////////////////////////////////////////////////aaa
-    // Subscribing to a Topic
-    var listener_web_diary = new ROSLIB.Topic({
-      ros: ros,
-      name: 'cti/web/diary',
-      messageType: 'std_msgs/String'
-    });
-
-    var to_document_link = "document.html";
-    listener_web_diary.subscribe(function (message) {
-      var json = JSON.parse(message.data);
-
-      document.getElementById("nav_message").innerHTML = json[json.length - 1].message;
-      document.getElementById("nav_code").innerHTML = json[json.length - 1].error_code;
-      to_document_link = "document.html#" + json[json.length - 1].error_code;
-      console.log(to_document_link);
-      if (json[json.length - 1].message == "信息：恢复正常" || json[json.length - 1].message == "------开机------") {
-        document.getElementById("nav_message").innerHTML = "无";
-        document.getElementById("nav_code").innerHTML = "无";
-        to_document_link = "document.html";
-      }
-    }
-    )
 
     // Subscribing to a Topic
     var cloud_msg = new ROSLIB.Topic({
@@ -278,6 +280,61 @@
       document.getElementById("cloud_code").innerHTML = obj_box_json[0].code;
     });
 
+    // Subscribing to a Topic
+    var listener_web_diary = new ROSLIB.Topic({
+      ros: ros,
+      name: 'cti/web/diary',
+      messageType: 'std_msgs/String'
+    });
+
+    var to_document_link = "document.html";
+    listener_web_diary.subscribe(function (message) {
+      var json = JSON.parse(message.data);
+
+      document.getElementById("nav_message").innerHTML = json[json.length - 1].message;
+      document.getElementById("nav_code").innerHTML = json[json.length - 1].error_code;
+      to_document_link = "document.html#" + json[json.length - 1].error_code;
+      console.log(to_document_link);
+      if (json[json.length - 1].message == "信息：恢复正常" || json[json.length - 1].message == "------开机------") {
+        document.getElementById("nav_message").innerHTML = "无";
+        document.getElementById("nav_code").innerHTML = "无";
+        to_document_link = "document.html";
+      }
+    }
+    )
+
+
+    // Subscribing to a Topic
+    var box_msg = new ROSLIB.Topic({
+      ros: ros,
+      name: 'cti/web/box_msg',
+      messageType: 'std_msgs/String'
+    });
+
+
+    box_msg.subscribe(function (message) {
+      var obj_box_json = JSON.parse(message.data)
+      for (var i = 0; i < obj_box_json.length; i++) {
+        var s1 = String(i);
+        var s2 = '_qr';
+        var s3 = '_hive_type';
+        var s4 = '_hive_device_type'
+        var s5 = '_position'
+        document.getElementById(s1.concat(s2)).innerHTML = obj_box_json[i].qr;
+        document.getElementById(s1.concat(s5)).innerHTML = obj_box_json[i].position;
+        for (var j = 0; j < box_type.length; j++) {
+          if (obj_box_json[i].hive_type == box_type[j].code) {
+            document.getElementById(s1.concat(s3)).innerHTML = box_type[j].name;
+          }
+        }
+        for (var j = 0; j < device_type.length; j++) {
+          if (obj_box_json[i].hive_device_type == device_type[j].code) {
+            document.getElementById(s1.concat(s4)).innerHTML = device_type[j].name;
+          }
+        }
+      }
+    });
+
 
     // Subscribing to a Topic
     var nav_version = new ROSLIB.Topic({
@@ -288,13 +345,16 @@
 
 
     nav_version.subscribe(function (message) {
+      //console.log(message);
       document.getElementById("nav_version").innerHTML = message.data;
     })
 
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
     function changeColor() {
       var color = "yellow|green|blue";
       color = color.split("|");
+      document.getElementById("odometer").style.color = color[parseInt(Math.random() * color.length)];
       document.getElementById("velocity").style.color = color[parseInt(Math.random() * color.length)];
       document.getElementById("blink").style.color = color[parseInt(Math.random() * color.length)];
       document.getElementById("project").style.color = color[parseInt(Math.random() * color.length)];
@@ -304,7 +364,6 @@
       document.getElementById("cloud_command_state").style.color = color[parseInt(Math.random() * color.length)];
       document.getElementById("cloud_code").style.color = color[parseInt(Math.random() * color.length)];
       document.getElementById("nav_version").style.color = color[parseInt(Math.random() * color.length)];
-      document.getElementById("odometer").style.color = color[parseInt(Math.random() * color.length)];
 
       document.getElementById("0_qr").style.color = color[parseInt(Math.random() * color.length)];
       document.getElementById("0_hive_type").style.color = color[parseInt(Math.random() * color.length)];
@@ -322,48 +381,8 @@
 
       document.getElementById("nav_message").style.color = color[parseInt(Math.random() * color.length)];
       document.getElementById("nav_code").style.color = color[parseInt(Math.random() * color.length)];
-
-      document.getElementById("connect_status").style.color = color[parseInt(Math.random() * color.length)];
-
     }
-
     setInterval("changeColor()", 500);
-
-
-    ////////////////////////////////////////////////////////////////////
-    var red_err_monit_ = new ROSLIB.Topic({
-      ros: ros,
-      name: '/cti/web/red_err_monitor',
-      messageType: 'std_msgs/Bool'
-    });
-
-    red_err_monit_.subscribe(function (message) {
-      if (message.data == true) {
-        err_red_control("red")
-      }
-      else if (message.data == false) {
-        err_red_control("black")
-      }
-    });
-
-    function err_red_control(color) {
-      if (color == "red") {
-        setTimeout(function () {
-          document.getElementById("ul_vehicle").style.color = "red";
-        }, 50);
-        return;
-      }
-      else if (color == "black") {
-        setTimeout(function () {
-          document.getElementById("ul_vehicle").style.color = "black";
-        }, 50);
-
-      }
-    }
-    ////////////////////////////////////////////////////////////////////////
-
-
-
   </script>
 
   <!-- <script language="javascript">
@@ -378,11 +397,11 @@
 <body>
   <ul>
     <strong>
-      <li><a class="title_left" href="vihicle.html" id="ul_vehicle">车辆状态</a></li>
+      <li><a class="title_left" href="vihicle.html">车辆状态</a></li>
       <li><a class="title_left" href="#home">导航状态</a></li>
       <li><a class="title_left" href="equitment.html">底盘状态</a></li>
       <li><a class="title_left" href="diary.html">错误日志</a></li>
-      <li><a class="title_left" href="tool.html">其他工具</a></li>
+      <li><a class="title_left" href="tool .html">其他工具</a></li>
     </strong>
   </ul>
 
@@ -395,9 +414,8 @@
     <title>阳光无人车</title>
     <h1 id="license">阳光无人车</h1>
 
-
     <script>
-      LICENSE = '阳光无人车' + LICENSE;
+      LICENSE = '阳光无人车-' + LICENSE;
       document.getElementById("license").innerHTML = LICENSE;
     </script>
 
@@ -432,56 +450,53 @@
     <p id="nav_message" class="inline">无</p>
     </p>
 
-    <!-- <td width="5%"><a href="#" onclick="location.href=ssa;" id = "errorCode_0" >无</a></td>"document.html#顶升" -->
 
     <body>
       <div align="center">
         <img id="tus" src="image/lidar_ma.png" class="lidar" width="600px" height="900px">
       </div>
     </body>
+    <!-- <button onclick="turn_to_coordination_model()"class ="thumbnail" >&nbsp; 切换到坐标模式 &nbsp;</button> -->
     <p class="inline">
     <h5 id="license">箱体信息:</h5>
     </p>
     <p class="inline">
     <h4 class="inline">二维码:</h4>
-    <p id="0_qr" class="inline">无</p>
+    <p id="0_qr" class="inline">空</p>
     <h4 class="inline">&nbsp箱子类型：</h4>
-    <p id="0_hive_type" class="inline">无</p>
+    <p id="0_hive_type" class="inline">空</p>
     <h4 class="inline">&nbsp装置类型：</h4>
-    <p id="0_hive_device_type" class="inline">无</p>
+    <p id="0_hive_device_type" class="inline">空</p>
     <h4 class="inline">&nbsp放置位置：</h4>
-    <p id="0_position" class="inline">无</p>
+    <p id="0_position" class="inline">空</p>
     </p>
     <p class="inline">
     <h4 class="inline">二维码:</h4>
-    <p id="1_qr" class="inline">无</p>
+    <p id="1_qr" class="inline">空</p>
     <h4 class="inline">&nbsp箱子类型：</h4>
-    <p id="1_hive_type" class="inline">无</p>
+    <p id="1_hive_type" class="inline">空</p>
     <h4 class="inline">&nbsp装置类型：</h4>
-    <p id="1_hive_device_type" class="inline">无</p>
+    <p id="1_hive_device_type" class="inline">空</p>
     <h4 class="inline">&nbsp放置位置：</h4>
-    <p id="1_position" class="inline">无</p>
+    <p id="1_position" class="inline">空</p>
     </p>
     <p class="inline">
     <h4 class="inline">二维码:</h4>
-    <p id="2_qr" class="inline">无</p>
+    <p id="2_qr" class="inline">空</p>
     <h4 class="inline">&nbsp箱子类型：</h4>
-    <p id="2_hive_type" class="inline">无</p>
+    <p id="2_hive_type" class="inline">空</p>
     <h4 class="inline">&nbsp装置类型：</h4>
-    <p id="2_hive_device_type" class="inline">无</p>
+    <p id="2_hive_device_type" class="inline">空</p>
     <h4 class="inline">&nbsp放置位置：</h4>
-    <p id="2_position" class="inline">无</p>
+    <p id="2_position" class="inline">空</p>
     </p>
   </div>
-  <!-- <button onclick="stop()" style="width:800px;">停止</button> -->
   <div class="icon">
-    <img src="image/123.png" class="icon" width="200px" height="175px" style="z-index: -1;" />
+    <img src="image/123.png" class="icon" width="200px" height="175px" style="z-index: 99;" />
   </div>
   <!-- <div class="icon" >
   <img src="image/002.png" class="icon" width="400px" height="350px" style="z-index: -2;"/>
   </div> -->
-  <!-- <br /><br /><br /> -->
-  <iframe src="vihicle.html" width="0" height="0"></iframe>
 </body>
 
 </html>
